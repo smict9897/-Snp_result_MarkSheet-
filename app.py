@@ -1,29 +1,38 @@
-import streamlit as st
-import pandas as pd
-import os
-
-# কোডের শুরুতে বর্তমান ডিরেক্টরি চেক করা
-current_path = os.getcwd()
-
-# ফাইল লোড করার লাইনটি এভাবে লিখুন:
-file_name = 'student_data.xlsx'
-
-if os.path.exists(file_name):
-    try:
-        # এখানে আপনার শিটের নাম অনুযায়ী ড্রপডাউন কাজ করবে
-        class_choice = st.selectbox("আপনার শ্রেণী নির্বাচন করুন:", ['৬ষ্ঠ শ্রেণী', '৭ম শ্রেণী', '৮ম শ্রেণী'])
-        df = pd.read_excel(file_name, sheet_name=class_choice)
+if st.button("ফলাফল দেখুন"):
+    student = df[df['রোল নাম্বার'] == roll_input]
+    
+    if not student.empty:
+        # স্কুলের নাম পরিবর্তন করা হয়েছে
+        st.markdown("<h1 style='text-align: center; color: #2E86C1;'>SHARAT CHANDRA NANDALAL PUBLIC SCHOOL AND COLLEGE</h1>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center;'>M A R K S H E E T</h3>", unsafe_allow_html=True)
+        st.markdown("---")
         
-        roll_input = st.number_input("আপনার রোল নাম্বার লিখুন:", min_value=1, step=1)
+        # ব্যক্তিগত তথ্য
+        st.write(f"**Name:** {student['নাম'].values[0]}")
+        st.write(f"**Class:** {class_choice}  |  **Roll:** {roll_input}")
+        st.markdown("---")
         
-        if st.button("ফলাফল দেখুন"):
-            # কলামের নাম যেন আপনার এক্সেল ফাইলের সাথে হুবহু মিলে (যেমন: 'রোল')
-            student = df[df['রোল নাম্বার'] == roll_input]
-            if not student.empty:
-                st.table(student)
-            else:
-                st.error("শিক্ষার্থী পাওয়া যায়নি।")
-    except Exception as e:
-        st.error(f"শিট বা কলামের নামে সমস্যা আছে: {e}")
-else:
-    st.error(f"ফাইলটি খুঁজে পাওয়া যাচ্ছে না। ফাইলটি সঠিক ফোল্ডারে আপলোড হয়েছে কি না নিশ্চিত করুন।")
+        # মার্কশিট টেবিল ডেটা (আপনার এক্সেল ফাইলের সব বিষয় এখানে লিখুন)
+        # যেমন: 'বাংলা', 'ইংরেজি', 'গণিত', 'বিজ্ঞান', 'আইসিটি' ইত্যাদি
+        subjects = ['বাংলা', 'ইংরেজি', 'গণিত', 'বিজ্ঞান', 'আইসিটি'] 
+        
+        marks_data = []
+        for sub in subjects:
+            if sub in student.columns:
+                marks = student[sub].values[0]
+                marks_data.append({
+                    "Subject": sub,
+                    "Full Marks": 100,
+                    "Obt. Marks": marks,
+                    "Percent": f"{marks}%"
+                })
+            
+        marks_df = pd.DataFrame(marks_data)
+        st.table(marks_df)
+        
+        # মোট নম্বর গণনা
+        total_obt = marks_df['Obt. Marks'].sum()
+        st.write(f"### Total Obtained Marks: {total_obt} / {len(marks_df)*100}")
+        
+    else:
+        st.warning("দুঃখিত, কোনো তথ্য পাওয়া যায়নি।")
