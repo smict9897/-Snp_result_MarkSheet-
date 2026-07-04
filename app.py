@@ -1,28 +1,29 @@
 import streamlit as st
 import pandas as pd
+import os
 
-# অ্যাপের শিরোনাম
-st.title("ছাত্র ফলাফল যাচাইকরণ সিস্টেম")
+# কোডের শুরুতে বর্তমান ডিরেক্টরি চেক করা
+current_path = os.getcwd()
 
-# ফাইল লোড করা
-file_name = 'শিক্ষার্থীদের_তথ্যাবলী_৬_৭_৮_শ্রেণী.xlsx'
+# ফাইল লোড করার লাইনটি এভাবে লিখুন:
+file_name = 'student_data.xlsx'
 
-# শ্রেণী নির্বাচনের অপশন
-class_choice = st.selectbox("আপনার শ্রেণী নির্বাচন করুন:", ['৬ষ্ঠ শ্রেণী', '৭ম শ্রেণী', '৮ম শ্রেণী'])
-
-# রোল ইনপুট
-roll_input = st.number_input("আপনার রোল নাম্বার লিখুন:", min_value=1, step=1)
-
-# বাটন ক্লিক করলে ফলাফল দেখাবে
-if st.button("ফলাফল দেখুন"):
+if os.path.exists(file_name):
     try:
+        # এখানে আপনার শিটের নাম অনুযায়ী ড্রপডাউন কাজ করবে
+        class_choice = st.selectbox("আপনার শ্রেণী নির্বাচন করুন:", ['৬ষ্ঠ শ্রেণী', '৭ম শ্রেণী', '৮ম শ্রেণী'])
         df = pd.read_excel(file_name, sheet_name=class_choice)
-        student = df[df['রোল নাম্বার'] == roll_input]
         
-        if not student.empty:
-            st.success("ফলাফল পাওয়া গেছে!")
-            st.table(student)
-        else:
-            st.error("দুঃখিত, এই রোল নাম্বারের কোনো শিক্ষার্থী পাওয়া যায়নি।")
+        roll_input = st.number_input("আপনার রোল নাম্বার লিখুন:", min_value=1, step=1)
+        
+        if st.button("ফলাফল দেখুন"):
+            # কলামের নাম যেন আপনার এক্সেল ফাইলের সাথে হুবহু মিলে (যেমন: 'রোল')
+            student = df[df['রোল'] == roll_input]
+            if not student.empty:
+                st.table(student)
+            else:
+                st.error("শিক্ষার্থী পাওয়া যায়নি।")
     except Exception as e:
-        st.error("ফাইলটি লোড করতে সমস্যা হচ্ছে।")
+        st.error(f"শিট বা কলামের নামে সমস্যা আছে: {e}")
+else:
+    st.error(f"ফাইলটি খুঁজে পাওয়া যাচ্ছে না। ফাইলটি সঠিক ফোল্ডারে আপলোড হয়েছে কি না নিশ্চিত করুন।")
