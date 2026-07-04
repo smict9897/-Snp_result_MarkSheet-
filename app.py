@@ -18,7 +18,7 @@ if os.path.exists(file_name):
         
         if st.button("ফলাফল দেখুন"):
             # কলামের নাম যেন আপনার এক্সেল ফাইলের সাথে হুবহু মিলে (যেমন: 'রোল')
-            student = df[df['রোল'] == roll_input]
+            student = df[df['রোল নাম্বার'] == roll_input]
             if not student.empty:
                 st.table(student)
             else:
