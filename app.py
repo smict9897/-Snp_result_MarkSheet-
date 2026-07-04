@@ -20,7 +20,7 @@ try:
     roll_input = st.number_input("আপনার রোল নাম্বার লিখুন:", min_value=1, step=1)
     
     if st.button("ফলাফল দেখুন"):
-        # আপনার এক্সেল ফাইলের কলামের নাম যদি 'রোল নাম্বার' হয়, তবে এটি ঠিক আছে
+        # আপনার এক্সেল ফাইলের কলামের নাম যেন 'রোল নাম্বার' হয়
         student = df[df['রোল নাম্বার'] == roll_input]
         
         if not student.empty:
@@ -30,10 +30,14 @@ try:
             st.markdown("---")
             
             # সব কলামের তথ্য টেবিল আকারে দেখানো
-            # এটি আপনার এক্সেলের সব বিষয় অটোমেটিক নিয়ে নেবে
             st.table(student.T.rename(columns={student.index[0]: 'ফলাফল'}))
             
-            st.balloons()
+            st.success("ফলাফল সফলভাবে পাওয়া গেছে!")
+        else:
+            st.warning("দুঃখিত, এই রোল নাম্বারের কোনো তথ্য পাওয়া যায়নি।")
+            
+except Exception as e:
+    st.error(f"অ্যাপে সমস্যা হচ্ছে: {e}")
         else:
             st.warning("দুঃখিত, এই রোল নাম্বারের কোনো তথ্য পাওয়া যায়নি।")
             
