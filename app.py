@@ -4,30 +4,30 @@ import streamlit.components.v1 as components
 import os
 import base64
 import hashlib
-from io import BytesIO
+from PIL import Image
+import io
 
-# Page configuration
+# ============ PAGE CONFIGURATION ============
 st.set_page_config(
     page_title="School Portal - SCNPS",
     page_icon="🏫",
-    layout="wide"  # Changed to wide for better layout
+    layout="wide"
 )
 
-# Constants
+# ============ CONSTANTS ============
 FILE_NAME = 'student_data.xlsx'
+TEACHERS_FILE = 'teachers_data.xlsx'
 CLASS_LIST = ['৬ষ্ঠ শ্রেণী', '৭ম শ্রেণী', '৮ম শ্রেণী']
-
-# Update subject list for data entry
 SUBJECTS = ['বাংলা', 'ইংরেজি', 'গণিত', 'বিজ্ঞান', 'তথ্য ও যোগাযোগ প্রযুক্তি', 'কৃষি']
 
-# Admin Credentials
+# ============ ADMIN CREDENTIALS ============
 ADMIN_CREDENTIALS = {
     "admin": "admin123",
     "teacher": "teacher123",
     "principal": "principal123"
 }
 
-# Session State
+# ============ SESSION STATE ============
 if "page" not in st.session_state:
     st.session_state.page = "home"
 if "class_choice" not in st.session_state:
@@ -40,8 +40,10 @@ if "username" not in st.session_state:
     st.session_state.username = None
 if "role" not in st.session_state:
     st.session_state.role = None
+if "selected_teacher" not in st.session_state:
+    st.session_state.selected_teacher = None
 
-# Navigation Functions
+# ============ NAVIGATION FUNCTIONS ============
 def go_home():
     st.session_state.page = "home"
 
@@ -86,18 +88,27 @@ def go_to_logout():
 def go_to_about():
     st.session_state.page = "about"
 
-# ---------- STYLES ----------
+def go_to_teacher_entry():
+    if st.session_state.logged_in:
+        st.session_state.page = "teacher_entry"
+    else:
+        st.warning("⚠️ দয়া করে প্রথমে লগইন করুন!")
+        st.session_state.page = "login"
+
+def show_teacher_bio(teacher_name):
+    st.session_state.selected_teacher = teacher_name
+    st.session_state.page = "teacher_bio"
+
+# ============ STYLES ============
 def apply_styles():
     st.markdown("""
     <style>
-        /* Global Styles */
         .main .block-container {
             padding-top: 2rem;
             padding-bottom: 2rem;
             max-width: 1200px;
         }
         
-        /* Header */
         .school-header {
             background: linear-gradient(135deg, #0d47a1, #1565c0);
             padding: 2rem 2rem;
@@ -109,26 +120,6 @@ def apply_styles():
             position: relative;
             overflow: hidden;
         }
-        .school-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 300px;
-            height: 300px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 50%;
-        }
-        .school-header::after {
-            content: '';
-            position: absolute;
-            bottom: -30%;
-            left: -10%;
-            width: 200px;
-            height: 200px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 50%;
-        }
         .school-header h1 {
             margin: 0;
             font-size: 2.2rem;
@@ -136,6 +127,7 @@ def apply_styles():
             letter-spacing: 2px;
             position: relative;
             z-index: 1;
+            color: white !important;
         }
         .school-header h3 {
             margin: 0.5rem 0 0 0;
@@ -144,6 +136,7 @@ def apply_styles():
             opacity: 0.9;
             position: relative;
             z-index: 1;
+            color: white !important;
         }
         .school-header .sub-title {
             font-size: 0.9rem;
@@ -152,9 +145,9 @@ def apply_styles():
             opacity: 0.8;
             position: relative;
             z-index: 1;
+            color: white !important;
         }
         
-        /* Cards */
         .card-btn {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
@@ -182,7 +175,6 @@ def apply_styles():
             background: #f8faff;
         }
         
-        /* Summary Box */
         .summary-box {
             display: flex;
             justify-content: space-around;
@@ -204,7 +196,6 @@ def apply_styles():
             margin-top: 0.25rem;
         }
         
-        /* Tables */
         .info-table {
             width: 100%;
             border-collapse: collapse;
@@ -228,7 +219,7 @@ def apply_styles():
         }
         .grade-table th {
             background: #0d47a1;
-            color: white;
+            color: white !important;
             padding: 1rem;
             text-align: left;
             font-weight: 600;
@@ -237,6 +228,7 @@ def apply_styles():
             padding: 0.8rem 1rem;
             border-bottom: 1px solid #f0f0f0;
             background: white;
+            color: #1a1a1a !important;
         }
         .grade-table tr:last-child td {
             border-bottom: none;
@@ -245,7 +237,6 @@ def apply_styles():
             background: #f8faff;
         }
         
-        /* Login & Forms */
         .login-container {
             max-width: 450px;
             margin: 2rem auto;
@@ -274,28 +265,6 @@ def apply_styles():
             color: #0d47a1;
         }
         
-        /* Print Button */
-        .print-btn-container {
-            text-align: center;
-            margin: 1.5rem 0;
-        }
-        .print-btn {
-            padding: 0.8rem 2.5rem;
-            background: #0d47a1;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s ease;
-            box-shadow: 0 4px 15px rgba(13, 71, 161, 0.3);
-        }
-        .print-btn:hover {
-            background: #1565c0;
-        }
-        
-        /* Section Headers */
         .section-title {
             font-size: 1.8rem;
             font-weight: 700;
@@ -311,7 +280,6 @@ def apply_styles():
             margin: 1.5rem 0 0.8rem 0;
         }
         
-        /* Stats Cards */
         .stat-card {
             background: white;
             padding: 1.5rem;
@@ -336,17 +304,63 @@ def apply_styles():
             margin-top: 0.25rem;
         }
         
-        /* Responsive */
+        .teacher-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #e8eef5;
+            text-align: center;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .teacher-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            border-color: #0d47a1;
+        }
+        .teacher-card img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #0d47a1;
+            margin-bottom: 0.5rem;
+        }
+        
+        .bio-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e8eef5;
+            margin: 1rem 0;
+        }
+        .bio-card img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #0d47a1;
+        }
+        .bio-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            background: #f8faff;
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+        
         @media (max-width: 768px) {
             .school-header h1 { font-size: 1.5rem; }
             .summary-box { flex-direction: column; gap: 0.5rem; text-align: center; }
             .card-btn button { height: 100px; font-size: 0.9rem; }
+            .bio-grid { grid-template-columns: 1fr; }
         }
         
-        /* Print Styles */
         @media print {
             .no-print { display: none !important; }
-            .print-only { display: block !important; }
             .school-header { background: #0d47a1 !important; -webkit-print-color-adjust: exact; }
             .grade-table th { background: #0d47a1 !important; -webkit-print-color-adjust: exact; }
         }
@@ -355,7 +369,7 @@ def apply_styles():
 
 apply_styles()
 
-# ---------- HEADER ----------
+# ============ HEADER ============
 st.markdown("""
     <div class="school-header">
         <h1>🏫 SHARAT CHANDRA NANDALAL</h1>
@@ -364,7 +378,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# ---------- USER INFO BAR ----------
+# ============ USER INFO BAR ============
 if st.session_state.logged_in:
     col1, col2, col3 = st.columns([2, 2, 1])
     with col1:
@@ -378,7 +392,7 @@ if st.session_state.logged_in:
             go_to_logout()
             st.rerun()
 
-# ---------- HELPER FUNCTIONS ----------
+# ============ HELPER FUNCTIONS ============
 def compute_summary():
     total, failed = 0, 0
     if not os.path.exists(FILE_NAME):
@@ -412,8 +426,28 @@ def get_class_students(class_name):
     except Exception:
         return None
 
+def load_teachers_data():
+    """Load teachers data from Excel file"""
+    if os.path.exists(TEACHERS_FILE):
+        try:
+            df = pd.read_excel(TEACHERS_FILE, sheet_name='Teachers')
+            return df
+        except Exception as e:
+            return None
+    else:
+        return None
+
+def save_teachers_data(df):
+    """Save teachers data to Excel file"""
+    try:
+        with pd.ExcelWriter(TEACHERS_FILE, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name='Teachers', index=False)
+        return True
+    except Exception as e:
+        st.error(f"❌ ডেটা সংরক্ষণে সমস্যা: {str(e)}")
+        return False
+
 def calculate_gpa_and_grade(marks):
-    """Calculate GPA and Grade from marks"""
     gpa_points = []
     for mark in marks:
         if mark >= 80: gpa_points.append(5.00)
@@ -437,9 +471,8 @@ def calculate_gpa_and_grade(marks):
     return round(gpa, 2), grade
 
 def create_printable_html(student_data, class_name, roll_no):
-    """Generate HTML for printing with professional design"""
     row = student_data.iloc[0]
-    skip_cols = {'রোল নাম্বার', 'নাম', 'আইডি', 'পাসওয়ার্ড', 'মোট নম্বর', 'জিপিএ', 'গ্রেড'}
+    skip_cols = {'রোল নাম্বার', 'নাম', 'আইডি', 'পাসওয়ার্ড', 'মোট নম্বর', 'জিপিএ', 'গ্রেড', 'আইডি'}
     subject_cols = [c for c in student_data.columns if c not in skip_cols]
     
     marks_rows = ""
@@ -622,13 +655,12 @@ def create_printable_html(student_data, class_name, roll_no):
     </html>
     """
 
-# ---------- PAGE: HOME ----------
+# ============ PAGE: HOME ============
 if st.session_state.page == "home":
     total, passed, failed = compute_summary()
     pass_pct = round((passed / total) * 100, 1) if total > 0 else 0
     fail_pct = round((failed / total) * 100, 1) if total > 0 else 0
 
-    # Summary Statistics
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown(f"""
@@ -654,23 +686,21 @@ if st.session_state.page == "home":
 
     st.markdown("---")
 
-    # Menu Cards - 4 columns for better layout
     cards = [
         ("👥", "Student List", go_to_student_list),
         ("🧑‍🏫", "Our Teachers", go_to_teachers),
-        ("📝", "Data Entry", go_to_data_entry),
+        ("📝", "Student Entry", go_to_data_entry),
+        ("👨‍🏫", "Teacher Entry", go_to_teacher_entry),
         ("⚡", "Result", go_to_input),
         ("🅡", "Class Routine", go_to_routine),
         ("🔐", "Admin Panel", go_to_admin_panel),
         ("🔑", "Login", go_to_login),
+        ("ℹ️", "About Us", go_to_about),
         ("📄", "Verify Certificate", None),
         ("✅", "Attendance Sheet", None),
-        ("📚", "News & Events", None),
-        ("ℹ️", "About Us", go_to_about),
         ("📞", "Contact", None),
     ]
 
-    # Display in 3 columns
     for i in range(0, len(cards), 3):
         row = cards[i:i+3]
         cols = st.columns(len(row))
@@ -686,10 +716,229 @@ if st.session_state.page == "home":
                     else:
                         st.info(f"ℹ️ '{label}' পেজটি এখনো তৈরি হয়নি।")
 
-# ---------- PAGE: ABOUT ----------
+# ============ PAGE: TEACHER ENTRY (NEW) ============
+elif st.session_state.page == "teacher_entry":
+    if not st.session_state.logged_in:
+        st.warning("⚠️ শিক্ষক এন্ট্রি করতে হলে লগইন করতে হবে!")
+        st.button("🔑 লগইন করুন", on_click=go_to_login)
+    else:
+        st.button("⬅️ হোমে ফিরে যান", on_click=go_home, use_container_width=False)
+        st.markdown('<div class="section-title">👨‍🏫 শিক্ষক এন্ট্রি</div>', unsafe_allow_html=True)
+        
+        tab1, tab2 = st.tabs(["➕ নতুন শিক্ষক যোগ করুন", "📊 সব শিক্ষকের তালিকা"])
+        
+        with tab1:
+            with st.form("teacher_entry_form", clear_on_submit=True):
+                st.markdown('<div class="section-subtitle">শিক্ষকের তথ্য দিন</div>', unsafe_allow_html=True)
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    name = st.text_input("👤 শিক্ষকের নাম *", placeholder="ড. মোঃ রহিম উদ্দিন")
+                    position = st.text_input("📌 পদবি *", placeholder="অধ্যক্ষ")
+                    subject = st.text_input("📖 বিষয় *", placeholder="গণিত")
+                    mobile = st.text_input("📞 মোবাইল নম্বর", placeholder="০১৭১২-৩৪৫৬৭৮")
+                    email = st.text_input("📧 ইমেইল", placeholder="principal@school.com")
+                
+                with col2:
+                    qualification = st.text_area("🎓 শিক্ষাগত যোগ্যতা", placeholder="পিএইচডি (গণিত), এমএসসি (গণিত)")
+                    experience = st.text_input("💼 অভিজ্ঞতা", placeholder="২৫ বছর")
+                    joining_date = st.date_input("📅 জয়েনিং তারিখ")
+                    address = st.text_area("📍 ঠিকানা", placeholder="ঢাকা, বাংলাদেশ")
+                    
+                    # Photo Upload
+                    st.markdown("**📸 শিক্ষকের ছবি আপলোড করুন**")
+                    uploaded_file = st.file_uploader(
+                        "ছবি নির্বাচন করুন (JPG, PNG)",
+                        type=['jpg', 'jpeg', 'png'],
+                        help="শিক্ষকের পাসপোর্ট সাইজ ছবি আপলোড করুন"
+                    )
+                
+                submitted = st.form_submit_button("💾 শিক্ষক সংরক্ষণ করুন", use_container_width=True)
+                
+                if submitted:
+                    if name and position and subject:
+                        # Load existing data
+                        df = load_teachers_data()
+                        
+                        if df is None:
+                            # Create new DataFrame
+                            df = pd.DataFrame(columns=[
+                                'নাম', 'পদবি', 'বিষয়', 'মোবাইল', 'ইমেইল',
+                                'শিক্ষাগত যোগ্যতা', 'অভিজ্ঞতা', 'জয়েনিং তারিখ', 'ঠিকানা', 'ছবি'
+                            ])
+                        
+                        # Process photo
+                        photo_data = ""
+                        if uploaded_file is not None:
+                            # Read image and convert to base64
+                            image = Image.open(uploaded_file)
+                            # Resize image to save space
+                            image = image.resize((200, 200))
+                            buffered = io.BytesIO()
+                            image.save(buffered, format="JPEG", quality=80)
+                            img_str = base64.b64encode(buffered.getvalue()).decode()
+                            photo_data = f"data:image/jpeg;base64,{img_str}"
+                        
+                        # Prepare new teacher data
+                        new_teacher = pd.DataFrame({
+                            'নাম': [name],
+                            'পদবি': [position],
+                            'বিষয়': [subject],
+                            'মোবাইল': [mobile],
+                            'ইমেইল': [email],
+                            'শিক্ষাগত যোগ্যতা': [qualification],
+                            'অভিজ্ঞতা': [experience],
+                            'জয়েনিং তারিখ': [joining_date.strftime('%d/%m/%Y')],
+                            'ঠিকানা': [address],
+                            'ছবি': [photo_data]
+                        })
+                        
+                        # Append to existing data
+                        updated_df = pd.concat([df, new_teacher], ignore_index=True)
+                        
+                        # Save to Excel
+                        if save_teachers_data(updated_df):
+                            st.success(f"✅ {name} এর তথ্য সফলভাবে সংরক্ষণ করা হয়েছে!")
+                            st.balloons()
+                    else:
+                        st.warning("⚠️ দয়া করে নাম, পদবি এবং বিষয় দিন!")
+        
+        with tab2:
+            st.markdown('<div class="section-subtitle">সব শিক্ষকের তালিকা</div>', unsafe_allow_html=True)
+            df = load_teachers_data()
+            
+            if df is not None and not df.empty:
+                st.write(f"**মোট শিক্ষক:** {len(df)} জন")
+                
+                # Display teachers in a table
+                display_df = df.copy()
+                if 'ছবি' in display_df.columns:
+                    display_df = display_df.drop(columns=['ছবি'])
+                st.dataframe(display_df, use_container_width=True, hide_index=True)
+                
+                # Delete option
+                st.markdown("---")
+                st.subheader("🗑️ শিক্ষক ডিলিট করুন")
+                
+                teacher_to_delete = st.selectbox(
+                    "ডিলিট করতে শিক্ষকের নাম নির্বাচন করুন",
+                    df['নাম'].tolist() if not df.empty else []
+                )
+                
+                if st.button("🗑️ ডিলিট করুন", type="primary", use_container_width=True):
+                    if teacher_to_delete:
+                        updated_df = df[df['নাম'] != teacher_to_delete]
+                        if save_teachers_data(updated_df):
+                            st.success(f"✅ {teacher_to_delete} এর তথ্য ডিলিট করা হয়েছে!")
+                            st.rerun()
+            else:
+                st.info("📭 এখনো কোনো শিক্ষকের তথ্য নেই। উপরের ফর্ম ব্যবহার করে যোগ করুন।")
+
+# ============ PAGE: TEACHERS (UPDATED WITH PHOTO) ============
+elif st.session_state.page == "teachers":
+    st.button("⬅️ হোমে ফিরে যান", on_click=go_home, use_container_width=False)
+    st.markdown('<div class="section-title">🧑‍🏫 আমাদের শিক্ষকবৃন্দ</div>', unsafe_allow_html=True)
+    
+    df_teachers = load_teachers_data()
+    
+    if df_teachers is not None and not df_teachers.empty:
+        st.info("💡 **শিক্ষকের কার্ডে ক্লিক করে বিস্তারিত তথ্য দেখুন।**")
+        
+        cols = st.columns(3)
+        for idx, (_, teacher) in enumerate(df_teachers.iterrows()):
+            with cols[idx % 3]:
+                # Get photo or use default
+                if 'ছবি' in teacher and pd.notna(teacher['ছবি']) and teacher['ছবি']:
+                    img_html = f'<img src="{teacher["ছবি"]}" alt="{teacher["নাম"]}" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid #0d47a1;margin-bottom:0.5rem;">'
+                else:
+                    img_html = f'''
+                        <div style="width:100px;height:100px;background:#0d47a1;border-radius:50%;margin:0 auto 0.5rem auto;display:flex;align-items:center;justify-content:center;color:white;font-size:2.5rem;font-weight:700;border:3px solid #0d47a1;">
+                            {teacher['নাম'][0]}
+                        </div>
+                    '''
+                
+                # Teacher Card
+                st.markdown(f"""
+                    <div class="teacher-card">
+                        {img_html}
+                        <h4 style="margin: 0.5rem 0 0 0; color: #0d47a1;">{teacher['নাম']}</h4>
+                        <p style="margin: 0.25rem 0; color: #666; font-size: 0.9rem;">
+                            {teacher['পদবি']}
+                        </p>
+                        <p style="margin: 0; color: #888; font-size: 0.85rem;">
+                            📖 {teacher['বিষয়']}
+                        </p>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                if st.button(f"📋 বিস্তারিত দেখুন", key=f"bio_{teacher['নাম']}", use_container_width=True):
+                    show_teacher_bio(teacher['নাম'])
+                    st.rerun()
+    else:
+        st.warning("⚠️ শিক্ষকদের ডেটাবেস পাওয়া যায়নি। দয়া করে 'Teacher Entry' থেকে যোগ করুন।")
+        st.info("📌 'Teacher Entry' পেজে গিয়ে নতুন শিক্ষক যোগ করুন।")
+
+# ============ PAGE: TEACHER BIO (UPDATED WITH PHOTO) ============
+elif st.session_state.page == "teacher_bio":
+    st.button("⬅️ শিক্ষকদের পৃষ্ঠায় ফিরে যান", on_click=go_to_teachers, use_container_width=False)
+    
+    teacher_name = st.session_state.selected_teacher
+    df_teachers = load_teachers_data()
+    
+    if df_teachers is not None and not df_teachers.empty:
+        teacher = df_teachers[df_teachers['নাম'] == teacher_name]
+        
+        if not teacher.empty:
+            row = teacher.iloc[0]
+            
+            # Get photo
+            if 'ছবি' in row and pd.notna(row['ছবি']) and row['ছবি']:
+                img_html = f'<img src="{row["ছবি"]}" alt="{row["নাম"]}" style="width:150px;height:150px;border-radius:50%;object-fit:cover;border:4px solid #0d47a1;">'
+            else:
+                img_html = f'''
+                    <div style="width:150px;height:150px;background:#0d47a1;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:4rem;font-weight:700;border:4px solid #0d47a1;">
+                        {row['নাম'][0]}
+                    </div>
+                '''
+            
+            st.markdown(f"""
+                <div class="bio-card">
+                    <div style="display: flex; align-items: center; gap: 2rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                        {img_html}
+                        <div>
+                            <h2 style="margin: 0; color: #0d47a1;">{row['নাম']}</h2>
+                            <p style="margin: 0; color: #666; font-size: 1.1rem;">
+                                {row['পদবি']} | {row['বিষয়']}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="bio-grid">
+                        <div><b>📞 মোবাইল:</b> {row.get('মোবাইল', 'N/A')}</div>
+                        <div><b>📧 ইমেইল:</b> {row.get('ইমেইল', 'N/A')}</div>
+                        <div><b>🎓 শিক্ষাগত যোগ্যতা:</b> {row.get('শিক্ষাগত যোগ্যতা', 'N/A')}</div>
+                        <div><b>💼 অভিজ্ঞতা:</b> {row.get('অভিজ্ঞতা', 'N/A')}</div>
+                        <div><b>📅 জয়েনিং তারিখ:</b> {row.get('জয়েনিং তারিখ', 'N/A')}</div>
+                        <div><b>📍 ঠিকানা:</b> {row.get('ঠিকানা', 'N/A')}</div>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # Print option
+            st.markdown("---")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("🖨️ প্রিন্ট করুন", use_container_width=True):
+                    st.info("💡 প্রিন্ট করতে Ctrl+P (Windows) বা Cmd+P (Mac) চাপুন।")
+        else:
+            st.error("❌ শিক্ষকের তথ্য পাওয়া যায়নি।")
+    else:
+        st.warning("⚠️ শিক্ষকদের ডেটাবেস পাওয়া যায়নি।")
+
+# ============ PAGE: ABOUT ============
 elif st.session_state.page == "about":
     st.button("⬅️ হোমে ফিরে যান", on_click=go_home, use_container_width=False)
-    
     st.markdown('<div class="section-title">🏫 প্রতিষ্ঠান সম্পর্কে</div>', unsafe_allow_html=True)
     
     col1, col2 = st.columns([2, 1])
@@ -697,14 +946,9 @@ elif st.session_state.page == "about":
         st.markdown("""
             <div style="background: #f8faff; padding: 2rem; border-radius: 16px; border: 1px solid #e8eef5;">
                 <p style="font-size: 1.05rem; line-height: 1.8;">
-                    <b>শarat Chandra Nandalal Public School and College</b> এর অতীত গৌরবোজ্জ্বল 
+                    <b>Sharat Chandra Nandalal Public School and College</b> এর অতীত গৌরবোজ্জ্বল 
                     বর্তমান প্রশংসনীয়। ২০২৩ ইংরেজীর ২০ শে জানুয়ারী প্রতিষ্ঠিত এই শিক্ষাপ্রতিষ্ঠানটি 
                     স্থানীয় ম্যাজিষ্ট্রেট অফিসের তৎকালীন প্রধান কার্যনির্বাহী কর্তৃক প্রতিষ্ঠিত হয়।
-                </p>
-                <p style="font-size: 1.05rem; line-height: 1.8; margin-top: 1rem;">
-                    ৯ জন বাংলাদেশী, ১ জন হিন্দু ও ৮ জন মুসলমান বিদ্যোৎসাহী ব্যক্তির একটি কমিটির 
-                    উপর এর পরিচালনার দায়িত্ব ন্যস্ত ছিল। এদেশের অধিবাসীদের বাংলায় শিক্ষায় শিক্ষিত 
-                    করার জন্য এ বিদ্যালয় চালু করা হয়।
                 </p>
             </div>
         """, unsafe_allow_html=True)
@@ -715,39 +959,35 @@ elif st.session_state.page == "about":
                 <h4 style="color: #0d47a1; margin-top: 0;">📌 গুরুত্বপূর্ণ তথ্য</h4>
                 <p><b>প্রতিষ্ঠা:</b> ২০২৩</p>
                 <p><b>শ্রেণী:</b> ৬ষ্ঠ থেকে কলেজ</p>
-                <p><b>শিক্ষার্থী:</b> ৫০০+</p>
-                <p><b>শিক্ষক:</b> ৩৫ জন</p>
-            </div>
-        """, unsafe_allow_html=True)
-    
-    # Principal's Message
-    st.markdown('<div class="section-title">🎯 অধ্যক্ষের বাণী</div>', unsafe_allow_html=True)
-    
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        st.markdown("""
-            <div style="text-align: center;">
-                <div style="width: 100px; height: 100px; background: #0d47a1; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; color: white; font-size: 2.5rem; font-weight: 700;">
-                    এম
-                </div>
-                <p style="font-weight: 600; margin-top: 0.5rem;">মোঃ মোস্তফা কামাল</p>
-                <p style="color: #666; font-size: 0.9rem;">অধ্যক্ষ</p>
-            </div>
-        """, unsafe_allow_html=True)
-    with col2:
-        st.markdown("""
-            <div style="background: #f8faff; padding: 1.5rem; border-radius: 16px; border: 1px solid #e8eef5;">
-                <p style="font-size: 1.05rem; line-height: 1.8; font-style: italic;">
-                    "প্রিয় শিক্ষার্থীবৃন্দ, আজ আমি আপনাদের সামনে দাঁড়িয়েছি একজন শিক্ষক হিসেবে, 
-                    একজন অভিভাবক হিসেবে, এবং একজন বন্ধু হিসেবে। আমি আপনাদেরকে বলতে চাই যে, 
-                    আপনারা সকলেই সক্ষম। আপনারা সকলেই আপনার সম্পূর্ণ সম্ভাবনায় পৌঁছাতে পারেন। 
-                    আপনাদেরকে শুধুমাত্র কঠোর পরিশ্রম করতে হবে, সৎ হতে হবে, এবং অন্যদের প্রতি 
-                    শ্রদ্ধাশীল হতে হবে।"
-                </p>
             </div>
         """, unsafe_allow_html=True)
 
-# ---------- PAGE: LOGIN ----------
+# ============ REMAINING PAGES ============
+# (Student List, Login, Routine, Data Entry, Admin Panel, Input, Result - same as before)
+
+# ============ PAGE: STUDENT LIST ============
+elif st.session_state.page == "student_list":
+    st.button("⬅️ হোমে ফিরে যান", on_click=go_home, use_container_width=False)
+    st.markdown('<div class="section-title">📋 শিক্ষার্থী তালিকা</div>', unsafe_allow_html=True)
+
+    if not os.path.exists(FILE_NAME):
+        st.warning("⚠️ ডেটা ফাইল পাওয়া যায়নি।")
+    else:
+        for cls in CLASS_LIST:
+            df = get_class_students(cls)
+            if df is None:
+                st.warning(f"{cls}: ডেটা পাওয়া যায়নি")
+                continue
+
+            with st.expander(f"📘 {cls} — {len(df)} জন শিক্ষার্থী", expanded=False):
+                display_cols = [c for c in ['রোল নাম্বার', 'আইডি', 'নাম', 'গ্রেড', 'জিপিএ'] if c in df.columns]
+                if display_cols:
+                    sorted_df = df[display_cols].sort_values(by='রোল নাম্বার') if 'রোল নাম্বার' in display_cols else df[display_cols]
+                    st.dataframe(sorted_df, use_container_width=True, hide_index=True, height=300)
+                else:
+                    st.dataframe(df, use_container_width=True, hide_index=True)
+
+# ============ PAGE: LOGIN ============
 elif st.session_state.page == "login":
     st.markdown("""
         <div class="login-container">
@@ -788,87 +1028,14 @@ elif st.session_state.page == "login":
             <p style="font-size: 14px; color: #666;">📌 ডেমো অ্যাকাউন্ট:</p>
             <p style="font-size: 13px; color: #333;">
                 <b>অ্যাডমিন:</b> admin / admin123<br>
-                <b>শিক্ষক:</b> teacher / teacher123<br>
-                <b>প্রধান শিক্ষক:</b> principal / principal123
+                <b>শিক্ষক:</b> teacher / teacher123
             </p>
         </div>
     """, unsafe_allow_html=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
 
-# ---------- PAGE: STUDENT LIST ----------
-elif st.session_state.page == "student_list":
-    st.button("⬅️ হোমে ফিরে যান", on_click=go_home, use_container_width=False)
-    st.markdown('<div class="section-title">📋 শিক্ষার্থী তালিকা</div>', unsafe_allow_html=True)
-
-    if not os.path.exists(FILE_NAME):
-        st.warning("⚠️ ডেটা ফাইল পাওয়া যায়নি।")
-    else:
-        for cls in CLASS_LIST:
-            df = get_class_students(cls)
-            if df is None:
-                st.warning(f"{cls}: ডেটা পাওয়া যায়নি")
-                continue
-
-            with st.expander(f"📘 {cls} — {len(df)} জন শিক্ষার্থী", expanded=False):
-                display_cols = [c for c in ['রোল নাম্বার', 'আইডি', 'নাম', 'গ্রেড', 'জিপিএ'] if c in df.columns]
-                if display_cols:
-                    sorted_df = df[display_cols].sort_values(by='রোল নাম্বার') if 'রোল নাম্বার' in display_cols else df[display_cols]
-                    st.dataframe(sorted_df, use_container_width=True, hide_index=True, height=300)
-                else:
-                    st.dataframe(df, use_container_width=True, hide_index=True)
-
-# ---------- PAGE: TEACHERS ----------
-elif st.session_state.page == "teachers":
-    st.button("⬅️ হোমে ফিরে যান", on_click=go_home, use_container_width=False)
-    st.markdown('<div class="section-title">🧑‍🏫 আমাদের শিক্ষকবৃন্দ</div>', unsafe_allow_html=True)
-    
-    teachers_data = {
-        "নাম": [
-            "ড. মোঃ রহিম উদ্দিন", 
-            "শ্রীমতি সুমনা রায়", 
-            "মোঃ কামাল হোসেন", 
-            "শ্রীমতি রুবিনা আক্তার",
-            "আবদুল্লাহ আল নোমান",
-            "মাহবুব সরকার",
-            "সোনিয়া আক্তার",
-            "তাসনিম জারা শাওন"
-        ],
-        "পদবি": [
-            "অধ্যক্ষ", 
-            "সহকারী অধ্যাপক", 
-            "সিনিয়র শিক্ষক", 
-            "শিক্ষক",
-            "সিনিয়র বাংলা শিক্ষক",
-            "সিনিয়র ইংরেজি শিক্ষক",
-            "গণিত শিক্ষিকা",
-            "সিনিয়র বিজ্ঞান শিক্ষিকা"
-        ],
-        "বিষয়": [
-            "গণিত", 
-            "ইংরেজি", 
-            "বাংলা", 
-            "বিজ্ঞান",
-            "বাংলা",
-            "ইংরেজি",
-            "গণিত",
-            "বিজ্ঞান"
-        ],
-        "মোবাইল": [
-            "০১৭১২-৩৪৫৬৭৮", 
-            "০১৮১২-৩৪৫৬৭৮", 
-            "০১৯১২-৩৪৫৬৭৮", 
-            "০১৬১২-৩৪৫৬৭৮",
-            "০১৭১২-৩৪৫৬৭৯",
-            "০১৮১২-৩৪৫৬৭৯",
-            "০১৯১২-৩৪৫৬৭৯",
-            "০১৬১২-৩৪৫৬৭৯"
-        ]
-    }
-    df_teachers = pd.DataFrame(teachers_data)
-    st.dataframe(df_teachers, use_container_width=True, hide_index=True)
-
-# ---------- PAGE: ROUTINE ----------
+# ============ PAGE: ROUTINE ============
 elif st.session_state.page == "routine":
     st.button("⬅️ হোমে ফিরে যান", on_click=go_home, use_container_width=False)
     st.markdown('<div class="section-title">🅡 ক্লাস রুটিন</div>', unsafe_allow_html=True)
@@ -879,13 +1046,11 @@ elif st.session_state.page == "routine":
         "২য় পিরিয়ড": ["গণিত", "ইংরেজি", "বাংলা", "গণিত", "ইংরেজি", "বাংলা"],
         "৩য় পিরিয়ড": ["ইংরেজি", "বাংলা", "গণিত", "ইংরেজি", "বাংলা", "গণিত"],
         "৪র্থ পিরিয়ড": ["বিজ্ঞান", "বাংলা", "গণিত", "বিজ্ঞান", "বাংলা", "গণিত"],
-        "৫ম পিরিয়ড": ["তথ্য ও যোগাযোগ প্রযুক্তি", "বিজ্ঞান", "ইংরেজি", "তথ্য ও যোগাযোগ প্রযুক্তি", "বিজ্ঞান", "ইংরেজি"],
-        "৬ষ্ঠ পিরিয়ড": ["কৃষি", "বাংলা", "গণিত", "কৃষি", "বাংলা", "গণিত"],
     }
     df_routine = pd.DataFrame(routine_data)
     st.dataframe(df_routine, use_container_width=True, hide_index=True)
 
-# ---------- PAGE: DATA ENTRY ----------
+# ============ PAGE: DATA ENTRY ============
 elif st.session_state.page == "data_entry":
     if not st.session_state.logged_in:
         st.warning("⚠️ ডেটা এন্ট্রি করতে হলে লগইন করতে হবে!")
@@ -930,11 +1095,10 @@ elif st.session_state.page == "data_entry":
                         total = sum(marks)
                         gpa, grade = calculate_gpa_and_grade(marks)
                         
-                        # Prepare data
                         data = {
                             'রোল নাম্বার': [roll],
                             'নাম': [name],
-                            'আইড이': [student_id if student_id else ''],
+                            'আইডি': [student_id if student_id else ''],
                             **{subj: [subject_marks[subj]] for subj in SUBJECTS},
                             'মোট নম্বর': [total],
                             'জিপিএ': [gpa],
@@ -972,9 +1136,9 @@ elif st.session_state.page == "data_entry":
                     except:
                         pass
             else:
-                st.info("📭 এখনো কোনো ডেটা নেই। উপরের ফর্ম ব্যবহার করে ডেটা যোগ করুন।")
+                st.info("📭 এখনো কোনো ডেটা নেই।")
 
-# ---------- PAGE: ADMIN PANEL ----------
+# ============ PAGE: ADMIN PANEL ============
 elif st.session_state.page == "admin_panel":
     if not st.session_state.logged_in:
         st.warning("⚠️ দয়া করে প্রথমে লগইন করুন!")
@@ -989,7 +1153,7 @@ elif st.session_state.page == "admin_panel":
             </div>
         """, unsafe_allow_html=True)
         
-        tab1, tab2, tab3, tab4 = st.tabs(["📊 ড্যাশবোর্ড", "👥 ইউজার ম্যানেজ", "📝 ডেটা এন্ট্রি", "⚙️ সেটিংস"])
+        tab1, tab2, tab3 = st.tabs(["📊 ড্যাশবোর্ড", "👥 ইউজার ম্যানেজ", "⚙️ সেটিংস"])
         
         with tab1:
             st.markdown('<div class="section-subtitle">📊 ড্যাশবোর্ড</div>', unsafe_allow_html=True)
@@ -1002,13 +1166,16 @@ elif st.session_state.page == "admin_panel":
                 except:
                     pass
             
+            df_teachers = load_teachers_data()
+            total_teachers = len(df_teachers) if df_teachers is not None else 0
+            
             col1, col2, col3 = st.columns(3)
             with col1:
                 st.metric("📚 মোট শ্রেণী", len(CLASS_LIST))
             with col2:
                 st.metric("👨‍🎓 মোট শিক্ষার্থী", total_students)
             with col3:
-                st.metric("👤 মোট ইউজার", len(ADMIN_CREDENTIALS))
+                st.metric("👨‍🏫 মোট শিক্ষক", total_teachers)
         
         with tab2:
             st.markdown('<div class="section-subtitle">👥 ইউজার ম্যানেজমেন্ট</div>', unsafe_allow_html=True)
@@ -1017,15 +1184,8 @@ elif st.session_state.page == "admin_panel":
                 "পাসওয়ার্ড": ["••••••••"] * len(ADMIN_CREDENTIALS)
             })
             st.dataframe(user_data, use_container_width=True, hide_index=True)
-            st.info("ℹ️ নতুন ইউজার যোগ করতে ডেভেলপারের সাথে যোগাযোগ করুন।")
         
         with tab3:
-            st.markdown('<div class="section-subtitle">📝 ডেটা এন্ট্রি</div>', unsafe_allow_html=True)
-            if st.button("📝 Data Entry পেজে যান", use_container_width=True):
-                go_to_data_entry()
-                st.rerun()
-        
-        with tab4:
             st.markdown('<div class="section-subtitle">⚙️ সেটিংস</div>', unsafe_allow_html=True)
             if os.path.exists(FILE_NAME):
                 file_size = os.path.getsize(FILE_NAME)
@@ -1033,7 +1193,7 @@ elif st.session_state.page == "admin_panel":
             else:
                 st.error("❌ ডেটা ফাইল পাওয়া যায়নি!")
 
-# ---------- PAGE: INPUT ----------
+# ============ PAGE: INPUT ============
 elif st.session_state.page == "input":
     col1, col2 = st.columns([3, 1])
     with col1:
@@ -1064,7 +1224,7 @@ elif st.session_state.page == "input":
             except ValueError:
                 st.error("❌ দয়া করে একটি বৈধ রোল নম্বর দিন।")
 
-# ---------- PAGE: RESULT ----------
+# ============ PAGE: RESULT ============
 elif st.session_state.page == "result":
     if st.session_state.class_choice is None or st.session_state.roll_input is None:
         st.error("❌ তথ্য পাওয়া যায়নি।")
@@ -1088,7 +1248,6 @@ elif st.session_state.page == "result":
                 else:
                     row = student.iloc[0]
                     
-                    # Student Info
                     st.markdown(f"""
                         <div style="background: #f8faff; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #e8eef5;">
                             <table style="width:100%; border-collapse:collapse;">
@@ -1108,7 +1267,6 @@ elif st.session_state.page == "result":
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    # Marks Table
                     skip_cols = {'রোল নাম্বার', 'নাম', 'আইডি', 'পাসওয়ার্ড', 'মোট নম্বর', 'জিপিএ', 'গ্রেড', 'আইডি'}
                     subject_cols = [c for c in df.columns if c not in skip_cols]
                     
@@ -1135,11 +1293,9 @@ elif st.session_state.page == "result":
                         </table>
                     """, unsafe_allow_html=True)
                     
-                    # Print Options
                     st.markdown("---")
                     st.markdown('<div class="section-subtitle">🖨️ প্রিন্ট অপশন</div>', unsafe_allow_html=True)
                     
-                    # Generate print HTML
                     print_html = create_printable_html(student, class_choice, roll_input)
                     b64 = base64.b64encode(print_html.encode()).decode()
                     href = f'data:text/html;base64,{b64}'
@@ -1147,7 +1303,6 @@ elif st.session_state.page == "result":
                     col1, col2, col3 = st.columns([1, 1, 1])
                     
                     with col1:
-                        # Direct Print (window.print)
                         components.html(
                             """
                             <div style="text-align:center;">
@@ -1155,7 +1310,6 @@ elif st.session_state.page == "result":
                                     style="width:100%; padding: 12px; background: #0d47a1; 
                                            color: white; border: none; border-radius: 10px; 
                                            cursor: pointer; font-size: 16px; font-weight: 600;
-                                           transition: all 0.3s ease;
                                            box-shadow: 0 4px 15px rgba(13, 71, 161, 0.3);">
                                     🖨️ ডাইরেক্ট প্রিন্ট
                                 </button>
@@ -1165,7 +1319,6 @@ elif st.session_state.page == "result":
                         )
                     
                     with col2:
-                        # New Window Print
                         st.markdown(f"""
                             <div style="text-align:center;">
                                 <a href="{href}" target="_blank"
@@ -1173,27 +1326,23 @@ elif st.session_state.page == "result":
                                            background: #1565c0; color: white; border: none; 
                                            border-radius: 10px; cursor: pointer; font-size: 16px; 
                                            font-weight: 600; text-decoration: none; text-align: center;
-                                           box-shadow: 0 4px 15px rgba(21, 101, 192, 0.3);
-                                           transition: all 0.3s ease;">
+                                           box-shadow: 0 4px 15px rgba(21, 101, 192, 0.3);">
                                     📄 নতুন উইন্ডোতে প্রিন্ট
                                 </a>
                             </div>
                         """, unsafe_allow_html=True)
                     
                     with col3:
-                        # Download as PDF option
                         st.download_button(
                             label="📥 PDF ডাউনলোড",
                             data=print_html,
                             file_name=f"marksheet_{row['নাম']}_{roll_input}.html",
                             mime="text/html",
                             use_container_width=True,
-                            help="HTML ফাইল ডাউনলোড করে ব্রাউজারে ওপেন করে প্রিন্ট করুন"
                         )
                     
                     st.info("💡 **টিপ:** 'ডাইরেক্ট প্রিন্ট' বাটনে ক্লিক করুন অথবা Ctrl+P (Windows) / Cmd+P (Mac) চাপুন।")
                     
-                    # Navigation
                     st.markdown("---")
                     col1, col2, col3 = st.columns(3)
                     with col1:
@@ -1215,7 +1364,7 @@ elif st.session_state.page == "result":
             st.error(f"❌ সমস্যা: {str(e)}")
             st.button("⬅️ ফিরে যান", on_click=go_to_input, use_container_width=True)
 
-# ---------- FOOTER ----------
+# ============ FOOTER ============
 st.markdown("---")
 st.markdown("""
     <div style="text-align: center; color: #666; font-size: 13px; padding: 1rem;">
