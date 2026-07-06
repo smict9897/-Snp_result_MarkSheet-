@@ -175,111 +175,6 @@ def apply_styles():
             background: #f8faff;
         }
         
-        .summary-box {
-            display: flex;
-            justify-content: space-around;
-            background: white;
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-            margin-bottom: 2rem;
-            border: 1px solid #f0f0f0;
-        }
-        .summary-box .num {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #0d47a1;
-        }
-        .summary-box .label {
-            font-size: 0.85rem;
-            color: #666;
-            margin-top: 0.25rem;
-        }
-        
-        .info-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #f8faff;
-            border-radius: 12px;
-            overflow: hidden;
-            margin: 1rem 0;
-        }
-        .info-table td {
-            padding: 0.8rem 1.2rem;
-            border-bottom: 1px solid #e8eef5;
-        }
-        
-        .grade-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1.5rem 0;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        .grade-table th {
-            background: #0d47a1;
-            color: white !important;
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-        }
-        .grade-table td {
-            padding: 0.8rem 1rem;
-            border-bottom: 1px solid #f0f0f0;
-            background: white;
-            color: #1a1a1a !important;
-        }
-        .grade-table tr:last-child td {
-            border-bottom: none;
-        }
-        .grade-table tr:nth-child(even) td {
-            background: #f8faff;
-        }
-        
-        .login-container {
-            max-width: 450px;
-            margin: 2rem auto;
-            padding: 2.5rem;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 8px 40px rgba(0,0,0,0.08);
-            border: 1px solid #e8eef5;
-        }
-        .login-container h2 {
-            text-align: center;
-            color: #0d47a1;
-            margin-bottom: 1.5rem;
-        }
-        
-        .user-info {
-            background: #e8f0fe;
-            padding: 0.8rem 1.5rem;
-            border-radius: 12px;
-            text-align: center;
-            margin-bottom: 1.5rem;
-            border: 1px solid #bbdefb;
-        }
-        .user-info span {
-            font-weight: 600;
-            color: #0d47a1;
-        }
-        
-        .section-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #0d47a1;
-            margin: 2rem 0 1rem 0;
-            padding-bottom: 0.5rem;
-            border-bottom: 3px solid #bbdefb;
-        }
-        .section-subtitle {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin: 1.5rem 0 0.8rem 0;
-        }
-        
         .stat-card {
             background: white;
             padding: 1.5rem;
@@ -352,9 +247,79 @@ def apply_styles():
             border-radius: 12px;
         }
         
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #0d47a1;
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #bbdefb;
+        }
+        .section-subtitle {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 1.5rem 0 0.8rem 0;
+        }
+        
+        .user-info {
+            background: #e8f0fe;
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            border: 1px solid #bbdefb;
+        }
+        .user-info span {
+            font-weight: 600;
+            color: #0d47a1;
+        }
+        
+        .login-container {
+            max-width: 450px;
+            margin: 2rem auto;
+            padding: 2.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+            border: 1px solid #e8eef5;
+        }
+        .login-container h2 {
+            text-align: center;
+            color: #0d47a1;
+            margin-bottom: 1.5rem;
+        }
+        
+        .grade-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .grade-table th {
+            background: #0d47a1;
+            color: white !important;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        .grade-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            background: white;
+            color: #1a1a1a !important;
+        }
+        .grade-table tr:last-child td {
+            border-bottom: none;
+        }
+        .grade-table tr:nth-child(even) td {
+            background: #f8faff;
+        }
+        
         @media (max-width: 768px) {
             .school-header h1 { font-size: 1.5rem; }
-            .summary-box { flex-direction: column; gap: 0.5rem; text-align: center; }
             .card-btn button { height: 100px; font-size: 0.9rem; }
             .bio-grid { grid-template-columns: 1fr; }
         }
@@ -427,24 +392,21 @@ def get_class_students(class_name):
         return None
 
 def load_teachers_data():
-    """Load teachers data from Excel file"""
     if os.path.exists(TEACHERS_FILE):
         try:
             df = pd.read_excel(TEACHERS_FILE, sheet_name='Teachers')
             return df
-        except Exception as e:
+        except Exception:
             return None
     else:
         return None
 
 def save_teachers_data(df):
-    """Save teachers data to Excel file"""
     try:
         with pd.ExcelWriter(TEACHERS_FILE, engine='openpyxl') as writer:
             df.to_excel(writer, sheet_name='Teachers', index=False)
         return True
-    except Exception as e:
-        st.error(f"❌ ডেটা সংরক্ষণে সমস্যা: {str(e)}")
+    except Exception:
         return False
 
 def calculate_gpa_and_grade(marks):
@@ -696,9 +658,6 @@ if st.session_state.page == "home":
         ("🔐", "Admin Panel", go_to_admin_panel),
         ("🔑", "Login", go_to_login),
         ("ℹ️", "About Us", go_to_about),
-        ("📄", "Verify Certificate", None),
-        ("✅", "Attendance Sheet", None),
-        ("📞", "Contact", None),
     ]
 
     for i in range(0, len(cards), 3):
@@ -716,7 +675,252 @@ if st.session_state.page == "home":
                     else:
                         st.info(f"ℹ️ '{label}' পেজটি এখনো তৈরি হয়নি।")
 
-# ============ PAGE: TEACHER ENTRY (NEW) ============
+# ============ PAGE: DATA ENTRY (UPDATED WITH DELETE) ============
+elif st.session_state.page == "data_entry":
+    if not st.session_state.logged_in:
+        st.warning("⚠️ ডেটা এন্ট্রি করতে হলে লগইন করতে হবে!")
+        st.button("🔑 লগইন করুন", on_click=go_to_login)
+    else:
+        st.button("⬅️ হোমে ফিরে যান", on_click=go_home, use_container_width=False)
+        st.markdown('<div class="section-title">📝 ডেটা এন্ট্রি</div>', unsafe_allow_html=True)
+        
+        tab1, tab2, tab3 = st.tabs(["➕ নতুন শিক্ষার্থী", "📊 সব শিক্ষার্থী", "🗑️ ডেটা ডিলিট"])
+        
+        # ========== TAB 1: ADD STUDENT ==========
+        with tab1:
+            with st.form("entry_form"):
+                st.markdown('<div class="section-subtitle">শিক্ষার্থীর তথ্য দিন</div>', unsafe_allow_html=True)
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    class_name = st.selectbox("শ্রেণী", CLASS_LIST)
+                    roll = st.number_input("রোল নাম্বার", min_value=1, step=1)
+                    name = st.text_input("শিক্ষার্থীর নাম")
+                    student_id = st.text_input("🆔 আইডি (ঐচ্ছিক)")
+                
+                with col2:
+                    st.markdown("**📖 বিষয়ভিত্তিক নম্বর**")
+                    subject_marks = {}
+                    cols = st.columns(2)
+                    for i, subject in enumerate(SUBJECTS):
+                        with cols[i % 2]:
+                            subject_marks[subject] = st.number_input(
+                                subject, 
+                                min_value=0, 
+                                max_value=100, 
+                                step=1,
+                                key=f"mark_{subject}"
+                            )
+                
+                submitted = st.form_submit_button("💾 ডেটা সংরক্ষণ করুন", use_container_width=True)
+                
+                if submitted:
+                    if name and roll:
+                        marks = list(subject_marks.values())
+                        total = sum(marks)
+                        gpa, grade = calculate_gpa_and_grade(marks)
+                        
+                        data = {
+                            'রোল নাম্বার': [roll],
+                            'নাম': [name],
+                            'আইডি': [student_id if student_id else ''],
+                            **{subj: [subject_marks[subj]] for subj in SUBJECTS},
+                            'মোট নম্বর': [total],
+                            'জিপিএ': [gpa],
+                            'গ্রেড': [grade]
+                        }
+                        new_data = pd.DataFrame(data)
+                        
+                        try:
+                            if os.path.exists(FILE_NAME):
+                                existing = pd.read_excel(FILE_NAME, sheet_name=class_name)
+                                updated = pd.concat([existing, new_data], ignore_index=True)
+                                with pd.ExcelWriter(FILE_NAME, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+                                    updated.to_excel(writer, sheet_name=class_name, index=False)
+                            else:
+                                with pd.ExcelWriter(FILE_NAME, engine='openpyxl') as writer:
+                                    new_data.to_excel(writer, sheet_name=class_name, index=False)
+                            
+                            st.success(f"✅ {name} এর ডেটা সফলভাবে সংরক্ষণ করা হয়েছে!")
+                            st.balloons()
+                        except Exception as e:
+                            st.error(f"❌ ডেটা সংরক্ষণে সমস্যা: {str(e)}")
+                    else:
+                        st.warning("⚠️ দয়া করে নাম এবং রোল নাম্বার দিন!")
+        
+        # ========== TAB 2: VIEW ALL STUDENTS ==========
+        with tab2:
+            st.markdown('<div class="section-subtitle">সব শিক্ষার্থীর ডেটা</div>', unsafe_allow_html=True)
+            if os.path.exists(FILE_NAME):
+                for cls in CLASS_LIST:
+                    try:
+                        df = pd.read_excel(FILE_NAME, sheet_name=cls)
+                        if not df.empty:
+                            st.write(f"### {cls} - {len(df)} জন")
+                            st.dataframe(df, use_container_width=True, hide_index=True)
+                            st.write("---")
+                    except:
+                        pass
+            else:
+                st.info("📭 এখনো কোনো ডেটা নেই।")
+        
+        # ========== TAB 3: DELETE STUDENTS ==========
+        with tab3:
+            st.markdown('<div class="section-subtitle">🗑️ শিক্ষার্থী ডিলিট করুন</div>', unsafe_allow_html=True)
+            
+            # Check if file exists
+            if not os.path.exists(FILE_NAME):
+                st.warning("⚠️ কোনো ডেটা ফাইল পাওয়া যায়নি।")
+            else:
+                # Show current data summary
+                total_students = 0
+                class_counts = {}
+                for cls in CLASS_LIST:
+                    try:
+                        df = pd.read_excel(FILE_NAME, sheet_name=cls)
+                        count = len(df)
+                        class_counts[cls] = count
+                        total_students += count
+                    except:
+                        class_counts[cls] = 0
+                
+                st.info(f"📊 মোট {total_students} জন শিক্ষার্থীর ডেটা রয়েছে।")
+                
+                # Show class wise count
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("৬ষ্ঠ শ্রেণী", class_counts.get('৬ষ্ঠ শ্রেণী', 0))
+                with col2:
+                    st.metric("৭ম শ্রেণী", class_counts.get('৭ম শ্রেণী', 0))
+                with col3:
+                    st.metric("৮ম শ্রেণী", class_counts.get('৮ম শ্রেণী', 0))
+                
+                st.markdown("---")
+                
+                # ===== DELETE OPTION 1: Single Student Delete =====
+                st.markdown("#### 1️⃣ একক শিক্ষার্থী ডিলিট")
+                
+                col1, col2 = st.columns([1, 1])
+                with col1:
+                    delete_class = st.selectbox(
+                        "শ্রেণী নির্বাচন করুন",
+                        CLASS_LIST,
+                        key="delete_class_select"
+                    )
+                
+                # Get students from selected class
+                try:
+                    df_students = pd.read_excel(FILE_NAME, sheet_name=delete_class)
+                    if not df_students.empty:
+                        student_list = df_students['নাম'].tolist()
+                        roll_list = df_students['রোল নাম্বার'].tolist()
+                        student_options = [f"{roll} - {name}" for roll, name in zip(roll_list, student_list)]
+                        
+                        with col2:
+                            selected_student = st.selectbox(
+                                "শিক্ষার্থী নির্বাচন করুন",
+                                student_options,
+                                key="delete_student_select"
+                            )
+                        
+                        if selected_student:
+                            selected_roll = int(selected_student.split(" - ")[0])
+                            selected_name = selected_student.split(" - ")[1]
+                            
+                            st.warning(f"⚠️ আপনি **{selected_name}** (রোল: {selected_roll}) কে ডিলিট করতে যাচ্ছেন।")
+                            
+                            col1, col2, col3 = st.columns([1, 1, 2])
+                            with col1:
+                                if st.button("🗑️ ডিলিট করুন", type="primary", key="delete_single_btn"):
+                                    try:
+                                        # Remove the student
+                                        updated_df = df_students[df_students['রোল নাম্বার'] != selected_roll]
+                                        
+                                        # Save updated data
+                                        with pd.ExcelWriter(FILE_NAME, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+                                            updated_df.to_excel(writer, sheet_name=delete_class, index=False)
+                                        
+                                        st.success(f"✅ {selected_name} এর ডেটা ডিলিট করা হয়েছে!")
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"❌ ডিলিট করতে সমস্যা: {str(e)}")
+                    else:
+                        st.info(f"📭 {delete_class} এ কোনো শিক্ষার্থী নেই।")
+                except Exception as e:
+                    st.info(f"📭 {delete_class} এ কোনো শিক্ষার্থী নেই।")
+                
+                st.markdown("---")
+                
+                # ===== DELETE OPTION 2: Delete All Students =====
+                st.markdown("#### 2️⃣ সব শিক্ষার্থী ডিলিট")
+                st.warning("⚠️ **সতর্কতা:** এই অপশনটি ব্যবহার করলে নির্বাচিত শ্রেণীর **সব** শিক্ষার্থীর ডেটা মুছে যাবে!")
+                
+                delete_all_class = st.selectbox(
+                    "শ্রেণী নির্বাচন করুন (সব ডেটা ডিলিটের জন্য)",
+                    CLASS_LIST,
+                    key="delete_all_class_select"
+                )
+                
+                # Show how many students will be deleted
+                try:
+                    df_to_delete = pd.read_excel(FILE_NAME, sheet_name=delete_all_class)
+                    student_count = len(df_to_delete)
+                    
+                    if student_count > 0:
+                        st.error(f"⚠️ {delete_all_class} এ **{student_count}** জন শিক্ষার্থীর ডেটা ডিলিট হবে!")
+                        
+                        # Confirmation checkbox
+                        confirm_delete_all = st.checkbox(
+                            f"✅ আমি নিশ্চিত যে {delete_all_class} এর সব ডেটা ডিলিট করতে চাই",
+                            key="confirm_delete_all"
+                        )
+                        
+                        if confirm_delete_all:
+                            if st.button("🗑️ সব ডেটা ডিলিট করুন", type="primary", key="delete_all_btn"):
+                                try:
+                                    # Create empty dataframe with same columns
+                                    empty_df = pd.DataFrame(columns=df_to_delete.columns)
+                                    
+                                    # Save empty dataframe
+                                    with pd.ExcelWriter(FILE_NAME, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+                                        empty_df.to_excel(writer, sheet_name=delete_all_class, index=False)
+                                    
+                                    st.success(f"✅ {delete_all_class} এর সব ডেটা ডিলিট করা হয়েছে!")
+                                    st.balloons()
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"❌ ডেটা ডিলিট করতে সমস্যা: {str(e)}")
+                    else:
+                        st.info(f"📭 {delete_all_class} এ কোনো শিক্ষার্থী নেই।")
+                except Exception as e:
+                    st.info(f"📭 {delete_all_class} এ কোনো শিক্ষার্থী নেই।")
+                
+                st.markdown("---")
+                
+                # ===== DELETE OPTION 3: Delete Entire File =====
+                st.markdown("#### 3️⃣ সম্পূর্ণ ফাইল ডিলিট")
+                st.error("⚠️ **সতর্কতা:** এই অপশনটি ব্যবহার করলে **সব শ্রেণীর** সব ডেটা মুছে যাবে!")
+                
+                confirm_delete_file = st.checkbox(
+                    "✅ আমি নিশ্চিত যে সমস্ত ডেটা ডিলিট করতে চাই",
+                    key="confirm_delete_file"
+                )
+                
+                if confirm_delete_file:
+                    if st.button("🗑️ সম্পূর্ণ ডেটাবেস ডিলিট করুন", type="primary", key="delete_file_btn"):
+                        try:
+                            if os.path.exists(FILE_NAME):
+                                os.remove(FILE_NAME)
+                                st.success("✅ সম্পূর্ণ ডেটাবেস ডিলিট করা হয়েছে!")
+                                st.balloons()
+                                st.rerun()
+                            else:
+                                st.warning("⚠️ কোনো ডেটা ফাইল পাওয়া যায়নি।")
+                        except Exception as e:
+                            st.error(f"❌ ডেটা ডিলিট করতে সমস্যা: {str(e)}")
+
+# ============ PAGE: TEACHER ENTRY ============
 elif st.session_state.page == "teacher_entry":
     if not st.session_state.logged_in:
         st.warning("⚠️ শিক্ষক এন্ট্রি করতে হলে লগইন করতে হবে!")
@@ -746,10 +950,8 @@ elif st.session_state.page == "teacher_entry":
                     joining_date = st.date_input("📅 জয়েনিং তারিখ")
                     address = st.text_area("📍 ঠিকানা", placeholder="ঢাকা, বাংলাদেশ")
                     
-                    # Photo Upload
-                    st.markdown("**📸 শিক্ষকের ছবি আপলোড করুন**")
                     uploaded_file = st.file_uploader(
-                        "ছবি নির্বাচন করুন (JPG, PNG)",
+                        "📸 শিক্ষকের ছবি আপলোড করুন (JPG, PNG)",
                         type=['jpg', 'jpeg', 'png'],
                         help="শিক্ষকের পাসপোর্ট সাইজ ছবি আপলোড করুন"
                     )
@@ -758,29 +960,23 @@ elif st.session_state.page == "teacher_entry":
                 
                 if submitted:
                     if name and position and subject:
-                        # Load existing data
                         df = load_teachers_data()
                         
                         if df is None:
-                            # Create new DataFrame
                             df = pd.DataFrame(columns=[
                                 'নাম', 'পদবি', 'বিষয়', 'মোবাইল', 'ইমেইল',
                                 'শিক্ষাগত যোগ্যতা', 'অভিজ্ঞতা', 'জয়েনিং তারিখ', 'ঠিকানা', 'ছবি'
                             ])
                         
-                        # Process photo
                         photo_data = ""
                         if uploaded_file is not None:
-                            # Read image and convert to base64
                             image = Image.open(uploaded_file)
-                            # Resize image to save space
                             image = image.resize((200, 200))
                             buffered = io.BytesIO()
                             image.save(buffered, format="JPEG", quality=80)
                             img_str = base64.b64encode(buffered.getvalue()).decode()
                             photo_data = f"data:image/jpeg;base64,{img_str}"
                         
-                        # Prepare new teacher data
                         new_teacher = pd.DataFrame({
                             'নাম': [name],
                             'পদবি': [position],
@@ -794,10 +990,8 @@ elif st.session_state.page == "teacher_entry":
                             'ছবি': [photo_data]
                         })
                         
-                        # Append to existing data
                         updated_df = pd.concat([df, new_teacher], ignore_index=True)
                         
-                        # Save to Excel
                         if save_teachers_data(updated_df):
                             st.success(f"✅ {name} এর তথ্য সফলভাবে সংরক্ষণ করা হয়েছে!")
                             st.balloons()
@@ -810,14 +1004,11 @@ elif st.session_state.page == "teacher_entry":
             
             if df is not None and not df.empty:
                 st.write(f"**মোট শিক্ষক:** {len(df)} জন")
-                
-                # Display teachers in a table
                 display_df = df.copy()
                 if 'ছবি' in display_df.columns:
                     display_df = display_df.drop(columns=['ছবি'])
                 st.dataframe(display_df, use_container_width=True, hide_index=True)
                 
-                # Delete option
                 st.markdown("---")
                 st.subheader("🗑️ শিক্ষক ডিলিট করুন")
                 
@@ -835,7 +1026,7 @@ elif st.session_state.page == "teacher_entry":
             else:
                 st.info("📭 এখনো কোনো শিক্ষকের তথ্য নেই। উপরের ফর্ম ব্যবহার করে যোগ করুন।")
 
-# ============ PAGE: TEACHERS (UPDATED WITH PHOTO) ============
+# ============ PAGE: TEACHERS ============
 elif st.session_state.page == "teachers":
     st.button("⬅️ হোমে ফিরে যান", on_click=go_home, use_container_width=False)
     st.markdown('<div class="section-title">🧑‍🏫 আমাদের শিক্ষকবৃন্দ</div>', unsafe_allow_html=True)
@@ -848,7 +1039,6 @@ elif st.session_state.page == "teachers":
         cols = st.columns(3)
         for idx, (_, teacher) in enumerate(df_teachers.iterrows()):
             with cols[idx % 3]:
-                # Get photo or use default
                 if 'ছবি' in teacher and pd.notna(teacher['ছবি']) and teacher['ছবি']:
                     img_html = f'<img src="{teacher["ছবি"]}" alt="{teacher["নাম"]}" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid #0d47a1;margin-bottom:0.5rem;">'
                 else:
@@ -858,7 +1048,6 @@ elif st.session_state.page == "teachers":
                         </div>
                     '''
                 
-                # Teacher Card
                 st.markdown(f"""
                     <div class="teacher-card">
                         {img_html}
@@ -876,10 +1065,9 @@ elif st.session_state.page == "teachers":
                     show_teacher_bio(teacher['নাম'])
                     st.rerun()
     else:
-        st.warning("⚠️ শিক্ষকদের ডেটাবেস পাওয়া যায়নি। দয়া করে 'Teacher Entry' থেকে যোগ করুন।")
-        st.info("📌 'Teacher Entry' পেজে গিয়ে নতুন শিক্ষক যোগ করুন।")
+        st.warning("⚠️ শিক্ষকদের ডেটাবেস পাওয়া যায়নি।")
 
-# ============ PAGE: TEACHER BIO (UPDATED WITH PHOTO) ============
+# ============ PAGE: TEACHER BIO ============
 elif st.session_state.page == "teacher_bio":
     st.button("⬅️ শিক্ষকদের পৃষ্ঠায় ফিরে যান", on_click=go_to_teachers, use_container_width=False)
     
@@ -892,7 +1080,6 @@ elif st.session_state.page == "teacher_bio":
         if not teacher.empty:
             row = teacher.iloc[0]
             
-            # Get photo
             if 'ছবি' in row and pd.notna(row['ছবি']) and row['ছবি']:
                 img_html = f'<img src="{row["ছবি"]}" alt="{row["নাম"]}" style="width:150px;height:150px;border-radius:50%;object-fit:cover;border:4px solid #0d47a1;">'
             else:
@@ -924,13 +1111,6 @@ elif st.session_state.page == "teacher_bio":
                     </div>
                 </div>
             """, unsafe_allow_html=True)
-            
-            # Print option
-            st.markdown("---")
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("🖨️ প্রিন্ট করুন", use_container_width=True):
-                    st.info("💡 প্রিন্ট করতে Ctrl+P (Windows) বা Cmd+P (Mac) চাপুন।")
         else:
             st.error("❌ শিক্ষকের তথ্য পাওয়া যায়নি।")
     else:
@@ -941,29 +1121,15 @@ elif st.session_state.page == "about":
     st.button("⬅️ হোমে ফিরে যান", on_click=go_home, use_container_width=False)
     st.markdown('<div class="section-title">🏫 প্রতিষ্ঠান সম্পর্কে</div>', unsafe_allow_html=True)
     
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        st.markdown("""
-            <div style="background: #f8faff; padding: 2rem; border-radius: 16px; border: 1px solid #e8eef5;">
-                <p style="font-size: 1.05rem; line-height: 1.8;">
-                    <b>Sharat Chandra Nandalal Public School and College</b> এর অতীত গৌরবোজ্জ্বল 
-                    বর্তমান প্রশংসনীয়। ২০২৩ ইংরেজীর ২০ শে জানুয়ারী প্রতিষ্ঠিত এই শিক্ষাপ্রতিষ্ঠানটি 
-                    স্থানীয় ম্যাজিষ্ট্রেট অফিসের তৎকালীন প্রধান কার্যনির্বাহী কর্তৃক প্রতিষ্ঠিত হয়।
-                </p>
-            </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-            <div style="background: #e8f0fe; padding: 1.5rem; border-radius: 16px; border: 1px solid #bbdefb;">
-                <h4 style="color: #0d47a1; margin-top: 0;">📌 গুরুত্বপূর্ণ তথ্য</h4>
-                <p><b>প্রতিষ্ঠা:</b> ২০২৩</p>
-                <p><b>শ্রেণী:</b> ৬ষ্ঠ থেকে কলেজ</p>
-            </div>
-        """, unsafe_allow_html=True)
-
-# ============ REMAINING PAGES ============
-# (Student List, Login, Routine, Data Entry, Admin Panel, Input, Result - same as before)
+    st.markdown("""
+        <div style="background: #f8faff; padding: 2rem; border-radius: 16px; border: 1px solid #e8eef5;">
+            <p style="font-size: 1.05rem; line-height: 1.8;">
+                <b>Sharat Chandra Nandalal Public School and College</b> এর অতীত গৌরবোজ্জ্বল 
+                বর্তমান প্রশংসনীয়। ২০২৩ ইংরেজীর ২০ শে জানুয়ারী প্রতিষ্ঠিত এই শিক্ষাপ্রতিষ্ঠানটি 
+                স্থানীয় ম্যাজিষ্ট্রেট অফিসের তৎকালীন প্রধান কার্যনির্বাহী কর্তৃক প্রতিষ্ঠিত হয়।
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
 # ============ PAGE: STUDENT LIST ============
 elif st.session_state.page == "student_list":
@@ -1049,94 +1215,6 @@ elif st.session_state.page == "routine":
     }
     df_routine = pd.DataFrame(routine_data)
     st.dataframe(df_routine, use_container_width=True, hide_index=True)
-
-# ============ PAGE: DATA ENTRY ============
-elif st.session_state.page == "data_entry":
-    if not st.session_state.logged_in:
-        st.warning("⚠️ ডেটা এন্ট্রি করতে হলে লগইন করতে হবে!")
-        st.button("🔑 লগইন করুন", on_click=go_to_login)
-    else:
-        st.button("⬅️ হোমে ফিরে যান", on_click=go_home, use_container_width=False)
-        st.markdown('<div class="section-title">📝 ডেটা এন্ট্রি</div>', unsafe_allow_html=True)
-        
-        tab1, tab2 = st.tabs(["➕ নতুন শিক্ষার্থী", "📊 সব শিক্ষার্থী"])
-        
-        with tab1:
-            with st.form("entry_form"):
-                st.markdown('<div class="section-subtitle">শিক্ষার্থীর তথ্য দিন</div>', unsafe_allow_html=True)
-                
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    class_name = st.selectbox("শ্রেণী", CLASS_LIST)
-                    roll = st.number_input("রোল নাম্বার", min_value=1, step=1)
-                    name = st.text_input("শিক্ষার্থীর নাম")
-                    student_id = st.text_input("🆔 আইডি (ঐচ্ছিক)")
-                
-                with col2:
-                    st.markdown("**📖 বিষয়ভিত্তিক নম্বর**")
-                    subject_marks = {}
-                    cols = st.columns(2)
-                    for i, subject in enumerate(SUBJECTS):
-                        with cols[i % 2]:
-                            subject_marks[subject] = st.number_input(
-                                subject, 
-                                min_value=0, 
-                                max_value=100, 
-                                step=1,
-                                key=f"mark_{subject}"
-                            )
-                
-                submitted = st.form_submit_button("💾 ডেটা সংরক্ষণ করুন", use_container_width=True)
-                
-                if submitted:
-                    if name and roll:
-                        marks = list(subject_marks.values())
-                        total = sum(marks)
-                        gpa, grade = calculate_gpa_and_grade(marks)
-                        
-                        data = {
-                            'রোল নাম্বার': [roll],
-                            'নাম': [name],
-                            'আইডি': [student_id if student_id else ''],
-                            **{subj: [subject_marks[subj]] for subj in SUBJECTS},
-                            'মোট নম্বর': [total],
-                            'জিপিএ': [gpa],
-                            'গ্রেড': [grade]
-                        }
-                        new_data = pd.DataFrame(data)
-                        
-                        try:
-                            if os.path.exists(FILE_NAME):
-                                existing = pd.read_excel(FILE_NAME, sheet_name=class_name)
-                                updated = pd.concat([existing, new_data], ignore_index=True)
-                                with pd.ExcelWriter(FILE_NAME, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
-                                    updated.to_excel(writer, sheet_name=class_name, index=False)
-                            else:
-                                with pd.ExcelWriter(FILE_NAME, engine='openpyxl') as writer:
-                                    new_data.to_excel(writer, sheet_name=class_name, index=False)
-                            
-                            st.success(f"✅ {name} এর ডেটা সফলভাবে সংরক্ষণ করা হয়েছে!")
-                            st.balloons()
-                        except Exception as e:
-                            st.error(f"❌ ডেটা সংরক্ষণে সমস্যা: {str(e)}")
-                    else:
-                        st.warning("⚠️ দয়া করে নাম এবং রোল নাম্বার দিন!")
-        
-        with tab2:
-            st.markdown('<div class="section-subtitle">সব শিক্ষার্থীর ডেটা</div>', unsafe_allow_html=True)
-            if os.path.exists(FILE_NAME):
-                for cls in CLASS_LIST:
-                    try:
-                        df = pd.read_excel(FILE_NAME, sheet_name=cls)
-                        if not df.empty:
-                            st.write(f"### {cls} - {len(df)} জন")
-                            st.dataframe(df, use_container_width=True, hide_index=True)
-                            st.write("---")
-                    except:
-                        pass
-            else:
-                st.info("📭 এখনো কোনো ডেটা নেই।")
 
 # ============ PAGE: ADMIN PANEL ============
 elif st.session_state.page == "admin_panel":
