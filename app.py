@@ -62,12 +62,14 @@ def apply_styles():
                 font-size: 24px;
                 font-weight: 700;
                 letter-spacing: 1px;
+                color: white !important;
             }
             .school-header h3 { 
                 margin: 8px 0 0 0; 
                 font-weight: 400; 
                 letter-spacing: 3px;
                 opacity: 0.9;
+                color: white !important;
             }
             
             /* Cards */
@@ -107,6 +109,7 @@ def apply_styles():
             .summary-box .num { 
                 font-size: 28px; 
                 font-weight: 700; 
+                color: #1a1a1a !important;
             }
             .summary-box .label { 
                 font-size: 13px; 
@@ -118,6 +121,7 @@ def apply_styles():
             .info-table td { 
                 padding: 8px 12px; 
                 border-bottom: 1px solid #f0f0f0;
+                color: #1a1a1a !important;
             }
             .grade-table {
                 width: 100%;
@@ -129,7 +133,7 @@ def apply_styles():
             }
             .grade-table th { 
                 background: #2d8659; 
-                color: white; 
+                color: white !important; 
                 padding: 12px;
                 text-align: left;
                 font-weight: 600;
@@ -138,6 +142,7 @@ def apply_styles():
                 padding: 10px 12px; 
                 border-bottom: 1px solid #f0f0f0;
                 background: white;
+                color: #1a1a1a !important;
             }
             .grade-table tr:last-child td {
                 border-bottom: none;
@@ -170,39 +175,88 @@ def apply_styles():
                 border-left-width: 4px;
             }
             
-            /* Print styles */
+            /* ========== PRINT STYLES - FIXED ========== */
             @media print {
-                .no-print {
+                /* Hide all non-essential elements */
+                .stApp, .stApp > header, .stApp > footer, 
+                .stButton, .stSelectbox, .stNumberInput,
+                .stAlert, .stExpander, .stMarkdown > div > p > button,
+                .css-1rs6os, .css-1v3fvcr, .css-1dp5vir,
+                .css-1inwz65, .css-1offfwp, .css-1xhj18k {
                     display: none !important;
                 }
-                .print-only {
+                
+                /* Show only print content */
+                .print-content {
                     display: block !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
                 }
-                .grade-table {
-                    box-shadow: none !important;
+                
+                /* Ensure text is visible */
+                * {
+                    color: #000000 !important;
+                    background: white !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
                 }
+                
+                /* Keep header colors */
                 .school-header {
                     background: #2d8659 !important;
                     -webkit-print-color-adjust: exact !important;
                     print-color-adjust: exact !important;
+                    color: white !important;
                 }
+                .school-header h1, .school-header h3 {
+                    color: white !important;
+                }
+                
+                /* Table header colors */
                 .grade-table th {
                     background: #2d8659 !important;
+                    color: white !important;
                     -webkit-print-color-adjust: exact !important;
                     print-color-adjust: exact !important;
                 }
+                
+                .grade-table td {
+                    color: #000000 !important;
+                    background: white !important;
+                }
+                
+                /* Info table */
+                .info-table td {
+                    color: #000000 !important;
+                }
+                
+                /* Summary box */
                 .summary-box {
                     border: 1px solid #ddd !important;
+                    background: white !important;
                 }
+                .summary-box .num {
+                    color: #000000 !important;
+                }
+                
+                /* Bold text */
+                b, strong {
+                    color: #000000 !important;
+                }
+            }
+            
+            /* Print content wrapper - hidden by default, shown during print */
+            .print-content {
+                display: none;
             }
         </style>
     """, unsafe_allow_html=True)
 
 apply_styles()
 
-# Header
+# Header - Hidden during print
 st.markdown("""
-    <div class="school-header">
+    <div class="school-header no-print">
         <h1>🏫 SHARAT CHANDRA NANDALAL</h1>
         <h3>PUBLIC SCHOOL AND COLLEGE</h3>
         <h3 style="font-size: 16px; letter-spacing: 2px; margin-top: 5px;">SCHOOL PORTAL</h3>
@@ -247,7 +301,7 @@ def get_class_students(class_name):
         return None
 
 def generate_print_html(student_data, class_name, roll_no):
-    """Generate HTML for printing"""
+    """Generate HTML for printing with proper colors"""
     row = student_data.iloc[0]
     skip_cols = {'রোল নাম্বার', 'নাম', 'আইডি', 'পাসওয়ার্ড', 'মোট নম্বর', 'জিপিএ', 'গ্রেড'}
     subject_cols = [c for c in student_data.columns if c not in skip_cols]
@@ -255,7 +309,7 @@ def generate_print_html(student_data, class_name, roll_no):
     # Build marks table
     marks_html = ""
     for subj in subject_cols:
-        marks_html += f"<tr><td>{subj}</td><td>{row[subj]}</td></tr>"
+        marks_html += f"<tr><td>{subj}</td><td style='text-align:center;'>{row[subj]}</td></tr>"
     
     html_content = f"""
     <!DOCTYPE html>
@@ -264,142 +318,284 @@ def generate_print_html(student_data, class_name, roll_no):
         <meta charset="UTF-8">
         <title>Result - {row['নাম']}</title>
         <style>
+            /* Reset and base styles */
+            * {{
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }}
             body {{
-                font-family: 'Arial', sans-serif;
-                padding: 40px;
-                max-width: 800px;
+                font-family: 'Arial', 'Times New Roman', sans-serif;
+                padding: 30px;
+                max-width: 900px;
                 margin: 0 auto;
                 background: white;
+                color: #000000 !important;
             }}
+            
+            /* School Header */
             .school-header {{
-                background: linear-gradient(135deg, #1a5f3f, #2d8659);
+                background: #2d8659;
                 padding: 25px 20px;
-                border-radius: 12px;
+                border-radius: 10px;
                 text-align: center;
                 color: white;
                 margin-bottom: 25px;
             }}
-            .school-header h1 {{ margin: 0; font-size: 24px; }}
-            .school-header h3 {{ margin: 8px 0 0 0; font-weight: 400; letter-spacing: 3px; opacity: 0.9; }}
+            .school-header h1 {{
+                margin: 0;
+                font-size: 26px;
+                font-weight: 700;
+                color: white !important;
+            }}
+            .school-header h3 {{
+                margin: 8px 0 0 0;
+                font-weight: 400;
+                letter-spacing: 3px;
+                color: white !important;
+                opacity: 0.95;
+            }}
+            .school-header .sub-title {{
+                font-size: 14px;
+                letter-spacing: 2px;
+                margin-top: 5px;
+                color: white !important;
+                opacity: 0.8;
+            }}
+            
+            /* Print Date */
+            .print-date {{
+                text-align: right;
+                color: #444 !important;
+                font-size: 12px;
+                margin-bottom: 15px;
+                border-bottom: 1px solid #ddd;
+                padding-bottom: 8px;
+            }}
+            
+            /* Info Table */
             .info-table {{
                 width: 100%;
                 border-collapse: collapse;
                 margin: 20px 0;
-                background: #f8fcf9;
+                background: #f9f9f9;
                 border-radius: 8px;
                 overflow: hidden;
+                border: 1px solid #ddd;
             }}
             .info-table td {{
                 padding: 10px 15px;
-                border-bottom: 1px solid #e0e0e0;
+                border-bottom: 1px solid #ddd;
+                color: #000000 !important;
+                font-size: 14px;
             }}
+            .info-table td:first-child {{
+                font-weight: 600;
+                background: #f0f0f0;
+                width: 30%;
+            }}
+            .info-table tr:last-child td {{
+                border-bottom: none;
+            }}
+            
+            /* Grade Table */
             .grade-table {{
                 width: 100%;
                 border-collapse: collapse;
                 margin: 20px 0;
                 border-radius: 8px;
                 overflow: hidden;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                border: 1px solid #ddd;
             }}
             .grade-table th {{
                 background: #2d8659;
-                color: white;
-                padding: 12px;
+                color: white !important;
+                padding: 12px 15px;
                 text-align: left;
                 font-weight: 600;
+                font-size: 14px;
+                border-bottom: 2px solid #1a5f3f;
             }}
             .grade-table td {{
-                padding: 10px 12px;
-                border-bottom: 1px solid #f0f0f0;
+                padding: 10px 15px;
+                border-bottom: 1px solid #ddd;
+                color: #000000 !important;
+                font-size: 14px;
+            }}
+            .grade-table tr:nth-child(even) {{
+                background: #f9f9f9;
             }}
             .grade-table tr:last-child td {{
                 border-bottom: none;
             }}
-            .grade-table tr:nth-child(even) {{
-                background: #f8fcf9;
+            
+            /* Highlight rows */
+            .highlight {{
+                background: #e8f5e9 !important;
+                font-weight: 700;
             }}
+            .highlight td {{
+                font-weight: 700;
+                color: #000000 !important;
+            }}
+            
+            /* Footer */
             .footer {{
                 text-align: center;
-                margin-top: 40px;
-                padding-top: 20px;
-                border-top: 2px solid #e0e0e0;
-                color: #666;
-                font-size: 12px;
+                margin-top: 30px;
+                padding-top: 15px;
+                border-top: 2px solid #ddd;
+                color: #666 !important;
+                font-size: 11px;
             }}
-            .highlight {{
-                background: #f8fcf9;
-                font-weight: bold;
+            .footer p {{
+                margin: 3px 0;
+                color: #666 !important;
             }}
-            .print-date {{
-                text-align: right;
-                color: #666;
-                font-size: 12px;
-                margin-bottom: 20px;
+            
+            /* Print button */
+            .print-btn-container {{
+                text-align: center;
+                margin-top: 25px;
             }}
+            .print-btn {{
+                padding: 12px 40px;
+                background: #2d8659;
+                color: white !important;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: 500;
+            }}
+            .print-btn:hover {{
+                background: #1a5f3f;
+            }}
+            
+            /* Print-specific styles */
             @media print {{
-                body {{ padding: 20px; }}
-                .no-print {{ display: none; }}
-                .grade-table {{ box-shadow: none; }}
-                .school-header {{ background: #2d8659 !important; -webkit-print-color-adjust: exact; }}
-                .grade-table th {{ background: #2d8659 !important; -webkit-print-color-adjust: exact; }}
+                body {{
+                    padding: 20px !important;
+                    background: white !important;
+                }}
+                .no-print {{
+                    display: none !important;
+                }}
+                .grade-table {{
+                    box-shadow: none !important;
+                    border: 1px solid #000 !important;
+                }}
+                .school-header {{
+                    background: #2d8659 !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                    color-adjust: exact !important;
+                }}
+                .grade-table th {{
+                    background: #2d8659 !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                    color-adjust: exact !important;
+                    color: white !important;
+                }}
+                .highlight {{
+                    background: #e8f5e9 !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                    color-adjust: exact !important;
+                }}
+                .info-table {{
+                    background: #f9f9f9 !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }}
+                .info-table td:first-child {{
+                    background: #f0f0f0 !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }}
+                .print-btn {{
+                    display: none !important;
+                }}
+                /* Ensure ALL text is visible */
+                * {{
+                    color: #000000 !important;
+                }}
+                .school-header h1, .school-header h3, .school-header .sub-title {{
+                    color: white !important;
+                }}
+                .grade-table th {{
+                    color: white !important;
+                }}
             }}
         </style>
     </head>
     <body>
+        <!-- School Header -->
         <div class="school-header">
             <h1>🏫 SHARAT CHANDRA NANDALAL</h1>
             <h3>PUBLIC SCHOOL AND COLLEGE</h3>
-            <h3 style="font-size: 14px; margin-top: 5px;">SCHOOL PORTAL - MARKSHEET</h3>
+            <div class="sub-title">SCHOOL PORTAL - MARKSHEET</div>
         </div>
         
+        <!-- Print Date -->
         <div class="print-date">
-            Printing Date: {pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S')}
+            📅 Printing Date: {pd.Timestamp.now().strftime('%d/%m/%Y %I:%M %p')}
         </div>
         
+        <!-- Student Information -->
         <table class="info-table">
             <tr>
-                <td><b>🎯 রোল নম্বর</b></td>
+                <td>🎯 রোল নম্বর</td>
                 <td>{roll_no}</td>
-                <td><b>👤 নাম</b></td>
+                <td>👤 নাম</td>
                 <td>{row['নাম']}</td>
             </tr>
             <tr>
-                <td><b>📚 শ্রেণী</b></td>
+                <td>📚 শ্রেণী</td>
                 <td>{class_name}</td>
-                <td><b>🆔 আইডি</b></td>
+                <td>🆔 আইডি</td>
                 <td>{row.get('আইডি', '')}</td>
             </tr>
         </table>
         
+        <!-- Marks Table -->
         <table class="grade-table">
             <tr>
-                <th>📖 বিষয়</th>
-                <th>📊 প্রাপ্ত নম্বর</th>
+                <th style="width:70%;">📖 বিষয়</th>
+                <th style="width:30%; text-align:center;">📊 প্রাপ্ত নম্বর</th>
             </tr>
             {marks_html}
             <tr class="highlight">
                 <td>📈 মোট নম্বর</td>
-                <td>{row.get('মোট নম্বর', '')}</td>
+                <td style="text-align:center;">{row.get('মোট নম্বর', '')}</td>
             </tr>
             <tr class="highlight">
                 <td>⭐ জিপিএ</td>
-                <td>{row.get('জিপিএ', '')}</td>
+                <td style="text-align:center;">{row.get('জিপিএ', '')}</td>
             </tr>
             <tr class="highlight">
                 <td>🏅 গ্রেড</td>
-                <td>{row.get('গ্রেড', '')}</td>
+                <td style="text-align:center;">{row.get('গ্রেড', '')}</td>
             </tr>
         </table>
         
+        <!-- Footer -->
         <div class="footer">
             <p>© 2026 Sharat Chandra Nandalal Public School and College</p>
             <p>This is a system generated marksheet. No signature required.</p>
+            <p style="margin-top:5px; font-size:10px; color:#999 !important;">
+                Generated on: {pd.Timestamp.now().strftime('%d/%m/%Y %I:%M %p')}
+            </p>
         </div>
         
-        <div class="no-print" style="text-align: center; margin-top: 30px;">
-            <button onclick="window.print()" style="padding: 12px 30px; background: #2d8659; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
-                🖨️ Click to Print
+        <!-- Print Button -->
+        <div class="print-btn-container no-print">
+            <button class="print-btn" onclick="window.print()">
+                🖨️ প্রিন্ট করুন
             </button>
+            <br><br>
+            <small style="color:#666;">💡 Tip: Press Ctrl+P (Windows) or Cmd+P (Mac) to print</small>
         </div>
     </body>
     </html>
@@ -571,7 +767,7 @@ elif st.session_state.page == "result":
                 else:
                     row = student.iloc[0]
                     
-                    # Student info
+                    # ========== STUDENT INFO ==========
                     st.markdown(f"""
                         <div style="background: #f8fcf9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                             <table style="width:100%; border-collapse:collapse;">
@@ -591,11 +787,10 @@ elif st.session_state.page == "result":
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    # Subject marks
+                    # ========== MARKS TABLE ==========
                     skip_cols = {'রোল নাম্বার', 'নাম', 'আইডি', 'পাসওয়ার্ড', 'মোট নম্বর', 'জিপিএ', 'গ্রেড'}
                     subject_cols = [c for c in df.columns if c not in skip_cols]
                     
-                    # Build marks table
                     marks_html = ""
                     for subj in subject_cols:
                         marks_html += f"<tr><td>{subj}</td><td>{row[subj]}</td></tr>"
@@ -619,59 +814,82 @@ elif st.session_state.page == "result":
                         </table>
                     """, unsafe_allow_html=True)
                     
-                    # Action buttons - Print options
+                    # ========== PRINT OPTIONS ==========
                     st.markdown("---")
-                    st.subheader("🖨️ Print Options")
+                    st.subheader("🖨️ প্রিন্ট অপশন")
                     
-                    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+                    # Create two columns for print options
+                    col1, col2 = st.columns(2)
+                    
                     with col1:
-                        if st.button("⬅️ ফিরে যান", use_container_width=True):
-                            go_to_input()
-                            st.rerun()
-                    
-                    with col2:
-                        if st.button("🏠 হোম", use_container_width=True):
-                            go_home()
-                            st.rerun()
-                    
-                    with col3:
-                        # Method 1: Simple window.print()
+                        st.markdown("""
+                            <div style="background: #f0f7f3; padding: 15px; border-radius: 10px; border: 1px solid #2d8659;">
+                                <p style="font-weight: 600; color: #1a5f3f;">📌 Option 1: Direct Print</p>
+                                <p style="font-size: 13px; color: #555;">Browser এর Print Dialog ব্যবহার করে প্রিন্ট করুন</p>
+                            </div>
+                        """, unsafe_allow_html=True)
+                        
                         components.html(
                             """
-                            <div style="text-align:center;">
+                            <div style="text-align:center; margin-top: 10px;">
                                 <button onclick="window.print()"
-                                    style="width:100%; padding: 10px; background: #2d8659; 
+                                    style="width:100%; padding: 12px; background: #2d8659; 
                                            color: white; border: none; border-radius: 8px; 
-                                           cursor: pointer; font-size: 16px; font-weight: 500;
+                                           cursor: pointer; font-size: 16px; font-weight: 600;
                                            transition: all 0.3s ease;">
-                                    🖨️ প্রিন্ট (Direct)
+                                    🖨️ ডিরেক্ট প্রিন্ট
                                 </button>
+                                <p style="font-size: 11px; color: #888; margin-top: 5px;">
+                                    ⚡ Ctrl+P (Windows) বা Cmd+P (Mac) চাপুন
+                                </p>
                             </div>
                             """,
-                            height=50,
+                            height=100,
                         )
                     
-                    with col4:
-                        # Method 2: New window with formatted content
+                    with col2:
+                        st.markdown("""
+                            <div style="background: #f0f7f3; padding: 15px; border-radius: 10px; border: 1px solid #2d8659;">
+                                <p style="font-weight: 600; color: #1a5f3f;">📌 Option 2: New Window Print</p>
+                                <p style="font-size: 13px; color: #555;">নতুন উইন্ডোতে খুলে প্রিন্ট করুন (সেরা মান)</p>
+                            </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Generate print HTML
                         html_content = generate_print_html(student, class_choice, roll_input)
                         b64 = base64.b64encode(html_content.encode()).decode()
                         href = f'data:text/html;base64,{b64}'
                         
                         st.markdown(f"""
-                            <div style="text-align:center;">
+                            <div style="text-align:center; margin-top: 10px;">
                                 <a href="{href}" target="_blank"
-                                    style="display: inline-block; width: 100%; padding: 10px; 
+                                    style="display: inline-block; width: 100%; padding: 12px; 
                                            background: #1a5f3f; color: white; border: none; 
                                            border-radius: 8px; cursor: pointer; font-size: 16px; 
-                                           font-weight: 500; text-decoration: none; text-align: center;
+                                           font-weight: 600; text-decoration: none; text-align: center;
                                            transition: all 0.3s ease;">
-                                    🖨️ প্রিন্ট (New Window)
+                                    🖨️ নতুন উইন্ডোতে প্রিন্ট
                                 </a>
+                                <p style="font-size: 11px; color: #888; margin-top: 5px;">
+                                    📌 সেরা প্রিন্ট কোয়ালিটির জন্য এই অপশন ব্যবহার করুন
+                                </p>
                             </div>
                         """, unsafe_allow_html=True)
                     
-                    # Additional print instruction
-                    st.info("💡 **Tip:** 'Direct Print' বাটনে ক্লিক করুন অথবা 'New Window' এ ওপেন করে প্রিন্ট করুন।")
+                    # Navigation buttons
+                    col3, col4, col5 = st.columns([1, 1, 1])
+                    with col3:
+                        if st.button("⬅️ ফিরে যান", use_container_width=True):
+                            go_to_input()
+                            st.rerun()
+                    with col4:
+                        if st.button("🏠 হোম", use_container_width=True):
+                            go_home()
+                            st.rerun()
+                    with col5:
+                        if st.button("🔄 নতুন অনুসন্ধান", use_container_width=True):
+                            go_to_input()
+                            st.rerun()
                     
                     st.balloons()
                     
