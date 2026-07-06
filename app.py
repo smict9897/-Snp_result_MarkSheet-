@@ -3,7 +3,6 @@ import pandas as pd
 import streamlit.components.v1 as components
 import os
 import base64
-from io import BytesIO
 
 # Page configuration
 st.set_page_config(
@@ -43,11 +42,13 @@ def go_to_teachers():
 def go_to_routine():
     st.session_state.page = "routine"
 
-# ---------------- SHARED STYLES ----------------
+def go_to_data_entry():
+    st.session_state.page = "data_entry"
+
+# ---------------- STYLES ----------------
 def apply_styles():
     st.markdown("""
         <style>
-            /* Main header */
             .school-header {
                 background: linear-gradient(135deg, #1a5f3f, #2d8659);
                 padding: 25px 20px;
@@ -61,18 +62,15 @@ def apply_styles():
                 margin: 0; 
                 font-size: 24px;
                 font-weight: 700;
-                letter-spacing: 1px;
                 color: white !important;
             }
             .school-header h3 { 
                 margin: 8px 0 0 0; 
                 font-weight: 400; 
                 letter-spacing: 3px;
-                opacity: 0.9;
                 color: white !important;
             }
             
-            /* Cards */
             .card-btn button {
                 width: 100%;
                 height: 120px;
@@ -95,7 +93,6 @@ def apply_styles():
                 background: #f8fcf9;
             }
             
-            /* Summary box */
             .summary-box {
                 display: flex;
                 justify-content: space-around;
@@ -117,12 +114,6 @@ def apply_styles():
                 margin-top: 4px;
             }
             
-            /* Tables */
-            .info-table td { 
-                padding: 8px 12px; 
-                border-bottom: 1px solid #f0f0f0;
-                color: #1a1a1a !important;
-            }
             .grade-table {
                 width: 100%;
                 border-collapse: collapse;
@@ -144,51 +135,14 @@ def apply_styles():
                 background: white;
                 color: #1a1a1a !important;
             }
-            .grade-table tr:last-child td {
-                border-bottom: none;
-            }
-            .grade-table tr:hover td {
-                background: #f8fcf9;
-            }
-            
-            /* Hide Streamlit elements during print */
-            @media print {
-                .stApp, .stApp > header, .stApp > footer, 
-                .stButton, .stSelectbox, .stNumberInput,
-                .stAlert, .stExpander, .stMarkdown > div > p > button,
-                .css-1rs6os, .css-1v3fvcr, .css-1dp5vir,
-                .css-1inwz65, .css-1offfwp, .css-1xhj18k,
-                .no-print {
-                    display: none !important;
-                }
-                
-                /* Make print content visible */
-                .print-content {
-                    display: block !important;
-                    visibility: visible !important;
-                    opacity: 1 !important;
-                }
-                
-                /* Force text to be visible */
-                body, .print-content, .print-content * {
-                    color: #000000 !important;
-                    background: white !important;
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }
-            }
-            
-            .print-content {
-                display: none;
-            }
         </style>
     """, unsafe_allow_html=True)
 
 apply_styles()
 
-# Header - Hidden during print
+# Header
 st.markdown("""
-    <div class="school-header no-print">
+    <div class="school-header">
         <h1>🏫 SHARAT CHANDRA NANDALAL</h1>
         <h3>PUBLIC SCHOOL AND COLLEGE</h3>
         <h3 style="font-size: 16px; letter-spacing: 2px; margin-top: 5px;">SCHOOL PORTAL</h3>
@@ -197,7 +151,6 @@ st.markdown("""
 
 # ---------------- HELPER FUNCTIONS ----------------
 def compute_summary():
-    """Calculate total students, passed, and failed from all classes"""
     total, failed = 0, 0
     if not os.path.exists(FILE_NAME):
         return total, 0, 0
@@ -216,7 +169,6 @@ def compute_summary():
     return total, passed, failed
 
 def load_student_data(class_name, roll_no):
-    """Load student data from Excel file"""
     try:
         df = pd.read_excel(FILE_NAME, sheet_name=class_name)
         student = df[df['রোল নাম্বার'].astype(str) == str(int(roll_no))]
@@ -225,281 +177,11 @@ def load_student_data(class_name, roll_no):
         return None
 
 def get_class_students(class_name):
-    """Get all students from a specific class"""
     try:
         df = pd.read_excel(FILE_NAME, sheet_name=class_name)
         return df
     except Exception:
         return None
-
-# ==================== SIMPLE PRINT FUNCTION ====================
-def create_printable_marksheet(student_data, class_name, roll_no):
-    """Create a simple HTML marksheet for printing"""
-    row = student_data.iloc[0]
-    skip_cols = {'রোল নাম্বার', 'নাম', 'আইডি', 'পাসওয়ার্ড', 'মোট নম্বর', 'জিপিএ', 'গ্রেড'}
-    subject_cols = [c for c in student_data.columns if c not in skip_cols]
-    
-    # Build marks rows
-    marks_rows = ""
-    for subj in subject_cols:
-        marks_rows += f"""
-            <tr>
-                <td style="padding: 8px 12px; border-bottom: 1px solid #ddd;">{subj}</td>
-                <td style="padding: 8px 12px; border-bottom: 1px solid #ddd; text-align: center;">{row[subj]}</td>
-            </tr>
-        """
-    
-    html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>মার্কশীট - {row['নাম']}</title>
-        <style>
-            /* RESET - Important for print */
-            * {{
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-                color: #000000 !important;
-            }}
-            
-            body {{
-                font-family: 'Arial', 'Times New Roman', sans-serif;
-                padding: 40px;
-                background: white;
-                color: #000000 !important;
-            }}
-            
-            .container {{
-                max-width: 900px;
-                margin: 0 auto;
-                background: white;
-                padding: 30px;
-                border: 2px solid #2d8659;
-                border-radius: 10px;
-            }}
-            
-            /* Header */
-            .header {{
-                background: #2d8659;
-                padding: 25px;
-                text-align: center;
-                border-radius: 8px;
-                margin-bottom: 25px;
-            }}
-            .header h1 {{
-                color: white !important;
-                font-size: 24px;
-                margin: 0;
-            }}
-            .header h3 {{
-                color: white !important;
-                font-size: 16px;
-                font-weight: 400;
-                margin: 5px 0 0 0;
-                letter-spacing: 2px;
-            }}
-            .header .sub {{
-                color: white !important;
-                font-size: 13px;
-                margin-top: 5px;
-                opacity: 0.9;
-            }}
-            
-            /* Info Table */
-            .info-table {{
-                width: 100%;
-                border-collapse: collapse;
-                margin: 20px 0;
-                background: #f5f5f5;
-                border-radius: 8px;
-                overflow: hidden;
-            }}
-            .info-table td {{
-                padding: 10px 15px;
-                border-bottom: 1px solid #ddd;
-                font-size: 14px;
-                color: #000000 !important;
-            }}
-            .info-table .label {{
-                font-weight: 600;
-                background: #e8e8e8;
-                width: 25%;
-            }}
-            
-            /* Marks Table */
-            .marks-table {{
-                width: 100%;
-                border-collapse: collapse;
-                margin: 20px 0;
-                border: 2px solid #2d8659;
-                border-radius: 8px;
-                overflow: hidden;
-            }}
-            .marks-table th {{
-                background: #2d8659;
-                color: white !important;
-                padding: 12px 15px;
-                text-align: left;
-                font-size: 14px;
-                border-bottom: 2px solid #1a5f3f;
-            }}
-            .marks-table td {{
-                padding: 10px 15px;
-                border-bottom: 1px solid #ddd;
-                font-size: 14px;
-                color: #000000 !important;
-            }}
-            .marks-table tr:nth-child(even) {{
-                background: #f9f9f9;
-            }}
-            .marks-table tr:last-child td {{
-                border-bottom: none;
-            }}
-            
-            /* Highlight rows */
-            .highlight {{
-                background: #e8f5e9 !important;
-                font-weight: 700;
-            }}
-            .highlight td {{
-                font-weight: 700;
-                color: #000000 !important;
-            }}
-            
-            /* Footer */
-            .footer {{
-                text-align: center;
-                margin-top: 30px;
-                padding-top: 15px;
-                border-top: 2px solid #ddd;
-                font-size: 11px;
-                color: #666 !important;
-            }}
-            .footer p {{
-                margin: 3px 0;
-                color: #666 !important;
-            }}
-            
-            .print-date {{
-                text-align: right;
-                font-size: 12px;
-                color: #444 !important;
-                margin-bottom: 15px;
-            }}
-            
-            /* Print button */
-            .print-btn {{
-                display: inline-block;
-                padding: 12px 40px;
-                background: #2d8659;
-                color: white !important;
-                border: none;
-                border-radius: 8px;
-                font-size: 16px;
-                cursor: pointer;
-                margin: 20px 0;
-            }}
-            
-            @media print {{
-                body {{
-                    padding: 20px !important;
-                }}
-                .container {{
-                    border: none !important;
-                    padding: 0 !important;
-                }}
-                .no-print {{
-                    display: none !important;
-                }}
-                .header {{
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }}
-                .marks-table th {{
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }}
-                .highlight {{
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }}
-                .info-table .label {{
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }}
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <!-- Header -->
-            <div class="header">
-                <h1>🏫 SHARAT CHANDRA NANDALAL</h1>
-                <h3>PUBLIC SCHOOL AND COLLEGE</h3>
-                <div class="sub">🎓 MARKSHEET</div>
-            </div>
-            
-            <!-- Print Date -->
-            <div class="print-date">
-                📅 {pd.Timestamp.now().strftime('%d/%m/%Y %I:%M %p')}
-            </div>
-            
-            <!-- Student Info -->
-            <table class="info-table">
-                <tr>
-                    <td class="label">🎯 রোল নম্বর</td>
-                    <td>{roll_no}</td>
-                    <td class="label">👤 নাম</td>
-                    <td>{row['নাম']}</td>
-                </tr>
-                <tr>
-                    <td class="label">📚 শ্রেণী</td>
-                    <td>{class_name}</td>
-                    <td class="label">🆔 আইডি</td>
-                    <td>{row.get('আইডি', '')}</td>
-                </tr>
-            </table>
-            
-            <!-- Marks -->
-            <table class="marks-table">
-                <tr>
-                    <th style="width:70%;">📖 বিষয়</th>
-                    <th style="width:30%; text-align:center;">📊 প্রাপ্ত নম্বর</th>
-                </tr>
-                {marks_rows}
-                <tr class="highlight">
-                    <td>📈 মোট নম্বর</td>
-                    <td style="text-align:center;">{row.get('মোট নম্বর', '')}</td>
-                </tr>
-                <tr class="highlight">
-                    <td>⭐ জিপিএ</td>
-                    <td style="text-align:center;">{row.get('জিপিএ', '')}</td>
-                </tr>
-                <tr class="highlight">
-                    <td>🏅 গ্রেড</td>
-                    <td style="text-align:center;">{row.get('গ্রেড', '')}</td>
-                </tr>
-            </table>
-            
-            <!-- Footer -->
-            <div class="footer">
-                <p>© 2026 Sharat Chandra Nandalal Public School and College</p>
-                <p>This is a system generated marksheet. No signature required.</p>
-            </div>
-            
-            <!-- Print Button -->
-            <div style="text-align:center; margin-top:20px;" class="no-print">
-                <button class="print-btn" onclick="window.print()">🖨️ প্রিন্ট করুন</button>
-                <br><br>
-                <small style="color:#666;">💡 Tip: Press Ctrl+P (Windows) or Cmd+P (Mac)</small>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    return html
 
 # ==================== PAGE: HOME ====================
 if st.session_state.page == "home":
@@ -527,13 +209,12 @@ if st.session_state.page == "home":
     cards = [
         ("👥", "Student List", go_to_student_list),
         ("🧑‍🏫", "Our Teachers", go_to_teachers),
+        ("📝", "Data Entry", go_to_data_entry),
+        ("⚡", "Result", go_to_input),
+        ("🅡", "Class Routine", go_to_routine),
         ("📄", "Verify Certificate", None),
         ("✅", "Attendance Sheet", None),
-        ("⚡", "Result", go_to_input),
-        ("🔔", "Exam Schedule", None),
         ("📚", "News & Events", None),
-        ("🅡", "Class Routine", go_to_routine),
-        ("🖼️", "Gallery", None),
     ]
 
     for i in range(0, len(cards), 2):
@@ -592,8 +273,6 @@ elif st.session_state.page == "routine":
     st.button("⬅️ হোমে ফিরে যান", on_click=go_home, use_container_width=False)
     st.subheader("🅡 ক্লাস রুটিন")
     
-    st.info("📅 ক্লাস রুটিন শীঘ্রই যোগ করা হবে।")
-    
     routine_data = {
         "দিন": ["শনিবার", "রবিবার", "সোমবার", "মঙ্গলবার", "বুধবার", "বৃহস্পতিবার"],
         "১ম পিরিয়ড": ["বাংলা", "গণিত", "ইংরেজি", "বাংলা", "গণিত", "ইংরেজি"],
@@ -603,6 +282,102 @@ elif st.session_state.page == "routine":
     }
     df_routine = pd.DataFrame(routine_data)
     st.dataframe(df_routine, use_container_width=True, hide_index=True)
+
+# ==================== PAGE: DATA ENTRY ====================
+elif st.session_state.page == "data_entry":
+    st.button("⬅️ হোমে ফিরে যান", on_click=go_home, use_container_width=False)
+    
+    st.title("📝 ডেটা এন্ট্রি")
+    
+    tab1, tab2 = st.tabs(["➕ নতুন শিক্ষার্থী", "📊 সব শিক্ষার্থী"])
+    
+    with tab1:
+        with st.form("entry_form"):
+            st.subheader("শিক্ষার্থীর তথ্য দিন")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                class_name = st.selectbox("শ্রেণী", CLASS_LIST)
+                roll = st.number_input("রোল নাম্বার", min_value=1, step=1)
+                name = st.text_input("শিক্ষার্থীর নাম")
+                
+            with col2:
+                bangla = st.number_input("বাংলা", min_value=0, max_value=100, step=1)
+                english = st.number_input("ইংরেজি", min_value=0, max_value=100, step=1)
+                math = st.number_input("গণিত", min_value=0, max_value=100, step=1)
+                science = st.number_input("বিজ্ঞান", min_value=0, max_value=100, step=1)
+            
+            submitted = st.form_submit_button("💾 ডেটা সংরক্ষণ করুন")
+            
+            if submitted:
+                if name and roll:
+                    marks = [bangla, english, math, science]
+                    total = sum(marks)
+                    
+                    gpa_points = []
+                    for mark in marks:
+                        if mark >= 80: gpa_points.append(5.00)
+                        elif mark >= 70: gpa_points.append(4.00)
+                        elif mark >= 60: gpa_points.append(3.50)
+                        elif mark >= 50: gpa_points.append(3.00)
+                        elif mark >= 40: gpa_points.append(2.00)
+                        elif mark >= 33: gpa_points.append(1.00)
+                        else: gpa_points.append(0.00)
+                    
+                    gpa = sum(gpa_points) / len(gpa_points)
+                    
+                    if gpa >= 5.00: grade = "A+"
+                    elif gpa >= 4.00: grade = "A"
+                    elif gpa >= 3.50: grade = "A-"
+                    elif gpa >= 3.00: grade = "B"
+                    elif gpa >= 2.00: grade = "C"
+                    elif gpa >= 1.00: grade = "D"
+                    else: grade = "F"
+                    
+                    new_data = pd.DataFrame({
+                        'রোল নাম্বার': [roll],
+                        'নাম': [name],
+                        'আইডি': [''],
+                        'বাংলা': [bangla],
+                        'ইংরেজি': [english],
+                        'গণিত': [math],
+                        'বিজ্ঞান': [science],
+                        'মোট নম্বর': [total],
+                        'জিপিএ': [round(gpa, 2)],
+                        'গ্রেড': [grade]
+                    })
+                    
+                    try:
+                        if os.path.exists(FILE_NAME):
+                            existing = pd.read_excel(FILE_NAME, sheet_name=class_name)
+                            updated = pd.concat([existing, new_data], ignore_index=True)
+                            with pd.ExcelWriter(FILE_NAME, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+                                updated.to_excel(writer, sheet_name=class_name, index=False)
+                        else:
+                            with pd.ExcelWriter(FILE_NAME, engine='openpyxl') as writer:
+                                new_data.to_excel(writer, sheet_name=class_name, index=False)
+                        
+                        st.success(f"✅ {name} এর ডেটা সংরক্ষণ করা হয়েছে!")
+                        st.balloons()
+                    except Exception as e:
+                        st.error(f"❌ সমস্যা: {str(e)}")
+                else:
+                    st.warning("⚠️ নাম এবং রোল নাম্বার দিন!")
+    
+    with tab2:
+        st.subheader("সব শিক্ষার্থীর ডেটা")
+        if os.path.exists(FILE_NAME):
+            for cls in CLASS_LIST:
+                try:
+                    df = pd.read_excel(FILE_NAME, sheet_name=cls)
+                    st.write(f"### {cls} - {len(df)} জন")
+                    st.dataframe(df, use_container_width=True, hide_index=True)
+                    st.write("---")
+                except:
+                    pass
+        else:
+            st.info("📭 কোনো ডেটা নেই")
 
 # ==================== PAGE: INPUT ====================
 elif st.session_state.page == "input":
@@ -632,7 +407,7 @@ elif st.session_state.page == "input":
             except ValueError:
                 st.error("❌ দয়া করে একটি বৈধ রোল নম্বর দিন।")
 
-# ==================== PAGE: RESULT (Marksheet) ====================
+# ==================== PAGE: RESULT ====================
 elif st.session_state.page == "result":
     if st.session_state.class_choice is None or st.session_state.roll_input is None:
         st.error("❌ তথ্য পাওয়া যায়নি।")
@@ -656,7 +431,6 @@ elif st.session_state.page == "result":
                 else:
                     row = student.iloc[0]
                     
-                    # ========== DISPLAY RESULT ==========
                     st.markdown(f"""
                         <div style="background: #f8fcf9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                             <table style="width:100%; border-collapse:collapse;">
@@ -676,7 +450,6 @@ elif st.session_state.page == "result":
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    # ========== MARKS TABLE ==========
                     skip_cols = {'রোল নাম্বার', 'নাম', 'আইডি', 'পাসওয়ার্ড', 'মোট নম্বর', 'জিপিএ', 'গ্রেড'}
                     subject_cols = [c for c in df.columns if c not in skip_cols]
                     
@@ -703,70 +476,38 @@ elif st.session_state.page == "result":
                         </table>
                     """, unsafe_allow_html=True)
                     
-                    # ========== PRINT SECTION ==========
+                    # Print Option
                     st.markdown("---")
-                    st.subheader("🖨️ মার্কশীট প্রিন্ট করুন")
+                    st.subheader("🖨️ প্রিন্ট করুন")
                     
                     # Generate print HTML
-                    print_html = create_printable_marksheet(student, class_choice, roll_input)
-                    
-                    # Encode to base64
+                    print_html = create_printable_html(student, class_choice, roll_input)
                     b64 = base64.b64encode(print_html.encode()).decode()
                     href = f'data:text/html;base64,{b64}'
                     
-                    # Display print options in two columns
                     col1, col2 = st.columns(2)
-                    
                     with col1:
-                        st.markdown("""
-                            <div style="background: #e8f5e9; padding: 20px; border-radius: 10px; border: 2px solid #2d8659; text-align: center;">
-                                <p style="font-size: 20px; margin: 0;">🖨️</p>
-                                <p style="font-weight: 600; margin: 5px 0;">Option 1: New Window</p>
-                                <p style="font-size: 12px; color: #555;">সবচেয়ে ভালো প্রিন্ট কোয়ালিটি</p>
-                            </div>
-                        """, unsafe_allow_html=True)
-                        
                         st.markdown(f"""
-                            <div style="text-align:center; margin-top: 10px;">
+                            <div style="text-align:center;">
                                 <a href="{href}" target="_blank"
                                     style="display: inline-block; width: 100%; padding: 14px; 
-                                           background: #2d8659; color: white !important; 
-                                           border: none; border-radius: 8px; 
-                                           cursor: pointer; font-size: 18px; 
+                                           background: #2d8659; color: white; border: none; 
+                                           border-radius: 8px; cursor: pointer; font-size: 18px; 
                                            font-weight: 600; text-decoration: none; text-align: center;">
-                                    📄 নতুন উইন্ডোতে খুলুন
+                                    📄 নতুন উইন্ডোতে প্রিন্ট
                                 </a>
                             </div>
                         """, unsafe_allow_html=True)
                     
                     with col2:
                         st.markdown("""
-                            <div style="background: #fff3e0; padding: 20px; border-radius: 10px; border: 2px solid #ff9800; text-align: center;">
-                                <p style="font-size: 20px; margin: 0;">⌨️</p>
-                                <p style="font-weight: 600; margin: 5px 0;">Option 2: Keyboard</p>
-                                <p style="font-size: 12px; color: #555;">ব্রাউজার থেকে সরাসরি প্রিন্ট</p>
-                            </div>
-                        """, unsafe_allow_html=True)
-                        
-                        st.markdown("""
-                            <div style="text-align:center; margin-top: 10px; padding: 20px; background: #f5f5f5; border-radius: 8px;">
-                                <p style="font-size: 24px; margin: 0;">⌨️</p>
-                                <p style="font-weight: 600; font-size: 18px; margin: 5px 0;">
-                                    <span style="background: #333; color: white; padding: 5px 15px; border-radius: 5px;">Ctrl + P</span>
-                                </p>
-                                <p style="font-size: 14px; color: #555; margin: 5px 0;">(Windows)</p>
-                                <p style="font-weight: 600; font-size: 18px; margin: 5px 0;">
-                                    <span style="background: #333; color: white; padding: 5px 15px; border-radius: 5px;">Cmd + P</span>
-                                </p>
-                                <p style="font-size: 14px; color: #555; margin: 5px 0;">(Mac)</p>
-                                <p style="font-size: 12px; color: #999; margin-top: 10px;">
-                                    ⚠️ Print Dialog এ "Background graphics" চেক করুন
+                            <div style="text-align:center; padding: 14px; background: #f5f5f5; border-radius: 8px;">
+                                <p style="margin: 0; font-size: 14px;">
+                                    ⌨️ <b>Ctrl+P</b> (Windows) বা <b>Cmd+P</b> (Mac)
                                 </p>
                             </div>
                         """, unsafe_allow_html=True)
                     
-                    # Navigation buttons
-                    st.markdown("---")
                     col1, col2, col3 = st.columns(3)
                     with col1:
                         if st.button("⬅️ ফিরে যান", use_container_width=True):
@@ -781,21 +522,87 @@ elif st.session_state.page == "result":
                             go_to_input()
                             st.rerun()
                     
-                    # Success message
-                    st.success("✅ মার্কশীট প্রস্তুত! উপরের Option গুলো থেকে প্রিন্ট করুন।")
                     st.balloons()
                     
         except Exception as e:
-            st.error(f"❌ অ্যাপে সমস্যা: {str(e)}")
+            st.error(f"❌ সমস্যা: {str(e)}")
             st.button("⬅️ ফিরে যান", on_click=go_to_input, use_container_width=True)
+
+# ---------------- PRINT HTML FUNCTION ----------------
+def create_printable_html(student_data, class_name, roll_no):
+    row = student_data.iloc[0]
+    skip_cols = {'রোল নাম্বার', 'নাম', 'আইডি', 'পাসওয়ার্ড', 'মোট নম্বর', 'জিপিএ', 'গ্রেড'}
+    subject_cols = [c for c in student_data.columns if c not in skip_cols]
+    
+    marks_rows = ""
+    for subj in subject_cols:
+        marks_rows += f"""
+            <tr>
+                <td style="padding: 8px 12px; border-bottom: 1px solid #ddd;">{subj}</td>
+                <td style="padding: 8px 12px; border-bottom: 1px solid #ddd; text-align: center;">{row[subj]}</td>
+            </tr>
+        """
+    
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>মার্কশীট</title>
+        <style>
+            * {{ margin: 0; padding: 0; box-sizing: border-box; color: #000 !important; }}
+            body {{ font-family: Arial, sans-serif; padding: 40px; background: white; }}
+            .container {{ max-width: 900px; margin: 0 auto; background: white; padding: 30px; border: 2px solid #2d8659; border-radius: 10px; }}
+            .header {{ background: #2d8659; padding: 25px; text-align: center; border-radius: 8px; margin-bottom: 25px; }}
+            .header h1 {{ color: white !important; font-size: 24px; }}
+            .header h3 {{ color: white !important; font-size: 16px; font-weight: 400; letter-spacing: 2px; }}
+            .info-table {{ width: 100%; border-collapse: collapse; margin: 20px 0; background: #f5f5f5; border-radius: 8px; overflow: hidden; }}
+            .info-table td {{ padding: 10px 15px; border-bottom: 1px solid #ddd; }}
+            .marks-table {{ width: 100%; border-collapse: collapse; margin: 20px 0; border: 2px solid #2d8659; border-radius: 8px; overflow: hidden; }}
+            .marks-table th {{ background: #2d8659; color: white !important; padding: 12px 15px; text-align: left; }}
+            .marks-table td {{ padding: 10px 15px; border-bottom: 1px solid #ddd; }}
+            .marks-table tr:nth-child(even) {{ background: #f9f9f9; }}
+            .highlight {{ background: #e8f5e9 !important; font-weight: 700; }}
+            .footer {{ text-align: center; margin-top: 30px; padding-top: 15px; border-top: 2px solid #ddd; font-size: 11px; color: #666 !important; }}
+            .print-date {{ text-align: right; font-size: 12px; color: #444 !important; margin-bottom: 15px; }}
+            @media print {{
+                body {{ padding: 20px; }}
+                .container {{ border: none; padding: 0; }}
+                .header {{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+                .marks-table th {{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🏫 SHARAT CHANDRA NANDALAL</h1>
+                <h3>PUBLIC SCHOOL AND COLLEGE</h3>
+            </div>
+            <div class="print-date">📅 {pd.Timestamp.now().strftime('%d/%m/%Y %I:%M %p')}</div>
+            <table class="info-table">
+                <tr><td><b>🎯 রোল</b></td><td>{roll_no}</td><td><b>👤 নাম</b></td><td>{row['নাম']}</td></tr>
+                <tr><td><b>📚 শ্রেণী</b></td><td>{class_name}</td><td><b>🆔 আইডি</b></td><td>{row.get('আইডি', '')}</td></tr>
+            </table>
+            <table class="marks-table">
+                <tr><th style="width:70%;">📖 বিষয়</th><th style="width:30%; text-align:center;">📊 নম্বর</th></tr>
+                {marks_rows}
+                <tr class="highlight"><td>📈 মোট নম্বর</td><td style="text-align:center;">{row.get('মোট নম্বর', '')}</td></tr>
+                <tr class="highlight"><td>⭐ জিপিএ</td><td style="text-align:center;">{row.get('জিপিএ', '')}</td></tr>
+                <tr class="highlight"><td>🏅 গ্রেড</td><td style="text-align:center;">{row.get('গ্রেড', '')}</td></tr>
+            </table>
+            <div class="footer"><p>© 2026 Sharat Chandra Nandalal Public School and College</p></div>
+        </div>
+    </body>
+    </html>
+    """
 
 # ==================== FOOTER ====================
 st.markdown("---")
 st.markdown(
     """
     <div style="text-align: center; color: #666; font-size: 12px; padding: 10px;">
-        © 2026 Sharat Chandra Nandalal Public School and College<br>
-        Developed with ❤️ for better education
+        © 2026 Sharat Chandra Nandalal Public School and College
     </div>
     """,
     unsafe_allow_html=True
