@@ -24,7 +24,8 @@ st.markdown("""
 
 st.markdown("""
     <div class="school-header">
-        <h1>SHARAT CHANDRA NANDALAL PUBLIC SCHOOL AND COLLEGE</h1>
+        <h1>শরৎচন্দ্র নন্দলাল পাবলিক উচ্চ ও কলেজ</h1>
+         <h2> বাল্লা জগন্নাথপুর, নবীগঞ্জ, হবিগঞ্জ<h2>
         <h3>MARKSHEET</h3>
     </div>
 """, unsafe_allow_html=True)
