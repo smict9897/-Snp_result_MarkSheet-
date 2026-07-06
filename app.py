@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import streamlit.components.v1 as components
-import base64
 import os
 
 st.set_page_config(page_title="School Portal", layout="centered")
@@ -26,6 +25,9 @@ def go_to_input():
 
 def go_to_result():
     st.session_state.page = "result"
+
+def go_to_student_list():
+    st.session_state.page = "student_list"
 
 
 # ---------------- SHARED STYLES ----------------
@@ -79,11 +81,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ---------------- helper: pass/fail summary across all classes ----------------
 def compute_summary():
-    total, passed, failed = 0, 0, 0
+    total, failed = 0, 0
     if not os.path.exists(file_name):
-        return total, passed, failed
+        return total, 0, 0
     for cls in CLASS_LIST:
         try:
             df = pd.read_excel(file_name, sheet_name=cls)
@@ -113,7 +114,7 @@ if st.session_state.page == "home":
     """, unsafe_allow_html=True)
 
     cards = [
-        ("👥", "Student List", None),
+        ("👥", "Student List", go_to_student_list),
         ("🧑‍🏫", "Our Teachers", None),
         ("📄", "Verify Certificate", None),
         ("✅", "Attendance Sheet", None),
@@ -137,6 +138,30 @@ if st.session_state.page == "home":
                     st.rerun()
                 elif clicked:
                     st.info(f"'{label}' পেজটি এখনো তৈরি হয়নি।")
+
+
+# ==================== PAGE: STUDENT LIST ====================
+elif st.session_state.page == "student_list":
+    st.button("⬅️ হোমে ফিরে যান", on_click=go_home)
+    st.subheader("শ্রেণী অনুযায়ী শিক্ষার্থী তালিকা")
+
+    for cls in CLASS_LIST:
+        try:
+            df = pd.read_excel(file_name, sheet_name=cls)
+        except Exception as e:
+            st.warning(f"{cls}: ডেটা পাওয়া যায়নি ({e})")
+            continue
+
+        with st.expander(f"📘 {cls} — {len(df)} জন শিক্ষার্থী", expanded=False):
+            display_cols = [c for c in ['রোল নাম্বার', 'আইডি', 'নাম', 'গ্রেড', 'জিপিএ'] if c in df.columns]
+            if display_cols:
+                st.dataframe(
+                    df[display_cols].sort_values(by='রোল নাম্বার') if 'রোল নাম্বার' in display_cols else df[display_cols],
+                    use_container_width=True,
+                    hide_index=True,
+                )
+            else:
+                st.dataframe(df, use_container_width=True, hide_index=True)
 
 
 # ==================== PAGE: INPUT ====================
