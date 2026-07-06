@@ -2,44 +2,33 @@ import streamlit as st
 import pandas as pd
 import streamlit.components.v1 as components
 import base64
+import os
 
-st.set_page_config(page_title="Marksheet", layout="centered")
+st.set_page_config(page_title="School Portal", layout="centered")
 
 file_name = 'student_data.xlsx'
+CLASS_LIST = ['৬ষ্ঠ শ্রেণী', '৭ম শ্রেণী', '৮ম শ্রেণী']
 
-# ---- session state defaults ----
+# ---- session state ----
 if "page" not in st.session_state:
-    st.session_state.page = "input"
+    st.session_state.page = "home"
 if "class_choice" not in st.session_state:
     st.session_state.class_choice = None
 if "roll_input" not in st.session_state:
     st.session_state.roll_input = None
 
 
+def go_home():
+    st.session_state.page = "home"
+
+def go_to_input():
+    st.session_state.page = "input"
+
 def go_to_result():
     st.session_state.page = "result"
 
 
-def go_back():
-    st.session_state.page = "input"
-
-
-def set_background(image_path):
-    with open(image_path, "rb") as f:
-        encoded = base64.b64encode(f.read()).decode()
-    st.markdown(f"""
-        <style>
-        .stApp {{
-            background-image: linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
-                               url("data:image/jpeg;base64,{encoded}");
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }}
-        </style>
-    """, unsafe_allow_html=True)
-
-
+# ---------------- SHARED STYLES ----------------
 st.markdown("""
     <style>
         .school-header {
@@ -55,21 +44,106 @@ st.markdown("""
         .info-table td { padding: 6px 10px; }
         .grade-table th { background-color: #2d8659; color: white; padding: 8px; }
         .grade-table td { padding: 8px; border-bottom: 1px solid #ddd; }
+
+        .card-btn button {
+            width: 100%;
+            height: 120px;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            font-size: 17px;
+            font-weight: 600;
+            color: #222;
+        }
+        .summary-box {
+            display: flex;
+            justify-content: space-around;
+            background: white;
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .summary-box .num { font-size: 24px; font-weight: 700; }
+        .summary-box .label { font-size: 13px; color: #666; }
     </style>
 """, unsafe_allow_html=True)
 
 st.markdown("""
     <div class="school-header">
         <h1>SHARAT CHANDRA NANDALAL PUBLIC SCHOOL AND COLLEGE</h1>
-        <h3>MARKSHEET</h3>
+        <h3>SCHOOL PORTAL</h3>
     </div>
 """, unsafe_allow_html=True)
 
-# ---------------- PAGE 1: INPUT ----------------
-if st.session_state.page == "input":
-    set_background("assembly.jpg")   # <-- put your photo here, see note below
 
-    class_choice = st.selectbox("আপনার শ্রেণী নির্বাচন করুন:", ['৬ষ্ঠ শ্রেণী', '৭ম শ্রেণী', '৮ম শ্রেণী'])
+# ---------------- helper: pass/fail summary across all classes ----------------
+def compute_summary():
+    total, passed, failed = 0, 0, 0
+    if not os.path.exists(file_name):
+        return total, passed, failed
+    for cls in CLASS_LIST:
+        try:
+            df = pd.read_excel(file_name, sheet_name=cls)
+        except Exception:
+            continue
+        if 'গ্রেড' not in df.columns:
+            continue
+        total += len(df)
+        failed += df['গ্রেড'].astype(str).str.upper().eq('F').sum()
+    passed = total - failed
+    return total, passed, failed
+
+
+# ==================== PAGE: HOME ====================
+if st.session_state.page == "home":
+
+    total, passed, failed = compute_summary()
+    pass_pct = round((passed / total) * 100, 1) if total else 0
+    fail_pct = round((failed / total) * 100, 1) if total else 0
+
+    st.markdown(f"""
+        <div class="summary-box">
+            <div><div class="num">{total}</div><div class="label">মোট শিক্ষার্থী</div></div>
+            <div><div class="num" style="color:#2d8659;">{pass_pct}%</div><div class="label">পাস</div></div>
+            <div><div class="num" style="color:#c0392b;">{fail_pct}%</div><div class="label">ফেল</div></div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    cards = [
+        ("👥", "Student List", None),
+        ("🧑‍🏫", "Our Teachers", None),
+        ("📄", "Verify Certificate", None),
+        ("✅", "Attendance Sheet", None),
+        ("⚡", "Result", go_to_input),
+        ("🔔", "Exam Schedule", None),
+        ("📚", "News", None),
+        ("🅡", "Routine", None),
+        ("🖼️", "Gallery", None),
+    ]
+
+    for i in range(0, len(cards), 2):
+        row = cards[i:i+2]
+        cols = st.columns(len(row))
+        for col, (icon, label, action) in zip(cols, row):
+            with col:
+                st.markdown('<div class="card-btn">', unsafe_allow_html=True)
+                clicked = st.button(f"{icon}\n\n{label}", key=label)
+                st.markdown('</div>', unsafe_allow_html=True)
+                if clicked and action:
+                    action()
+                    st.rerun()
+                elif clicked:
+                    st.info(f"'{label}' পেজটি এখনো তৈরি হয়নি।")
+
+
+# ==================== PAGE: INPUT ====================
+elif st.session_state.page == "input":
+    st.button("⬅️ হোমে ফিরে যান", on_click=go_home)
+
+    class_choice = st.selectbox("আপনার শ্রেণী নির্বাচন করুন:", CLASS_LIST)
     roll_input = st.number_input("রোল নম্বর লিখুন:", min_value=1, step=1)
 
     if st.button("ফলাফল দেখুন"):
@@ -87,7 +161,8 @@ if st.session_state.page == "input":
         except Exception as e:
             st.error(f"অ্যাপে সমস্যা হচ্ছে: {e}")
 
-# ---------------- PAGE 2: RESULT ----------------
+
+# ==================== PAGE: RESULT (Marksheet) ====================
 elif st.session_state.page == "result":
     class_choice = st.session_state.class_choice
     roll_input = st.session_state.roll_input
@@ -123,17 +198,19 @@ elif st.session_state.page == "result":
             </table>
         """, unsafe_allow_html=True)
 
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
-            st.button("⬅️ ফিরে যান", on_click=go_back)
+            st.button("⬅️ ফিরে যান", on_click=go_to_input)
         with col2:
+            st.button("🏠 হোম", on_click=go_home)
+        with col3:
             components.html(
                 """
                 <div style="text-align:right;">
                     <button onclick="window.parent.print()"
                         style="padding:8px 16px; background:#2d8659; color:white;
                                border:none; border-radius:6px; cursor:pointer;">
-                        🖨️ প্রিন্ট করুন
+                        🖨️ প্রিন্ট
                     </button>
                 </div>
                 """,
@@ -144,4 +221,4 @@ elif st.session_state.page == "result":
 
     except Exception as e:
         st.error(f"অ্যাপে সমস্যা হচ্ছে: {e}")
-        st.button("⬅️ ফিরে যান", on_click=go_back)
+        st.button("⬅️ ফিরে যান", on_click=go_to_input)
