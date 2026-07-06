@@ -25,15 +25,7 @@ try:
         else:
             st.warning("দুঃখিত, এই রোল নাম্বারের কোনো তথ্য পাওয়া যায়নি।")
 except Exception as e:
-    st.error(f"ফাইল লোড হতে সমস্যা হচ্ছে: {e}")
-            st.warning("দুঃখিত, এই রোল নাম্বারের কোনো তথ্য পাওয়া যায়নি।")
-            
-except Exception as e:
     st.error(f"অ্যাপে সমস্যা হচ্ছে: {e}")
-        else:
-            st.warning("দুঃখিত, এই রোল নাম্বারের কোনো তথ্য পাওয়া যায়নি।")
-            
-except Exception as e:
     st.error(f"অ্যাপে সমস্যা হচ্ছে: {e}. নিশ্চিত করুন যে আপনার এক্সেল ফাইলে 'রোল নাম্বার' এবং 'নাম' কলামটি আছে।")
                         "Obt. Marks": marks,
                         "Percent": f"{marks}%"
