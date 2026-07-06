@@ -139,3 +139,111 @@ if st.session_state.page == "home":
                 elif clicked:
                     st.info(f"'{label}' পেজটি এখনো তৈরি হয়নি।")
 
+
+# ==================== PAGE: STUDENT LIST ====================
+elif st.session_state.page == "student_list":
+    st.button("⬅️ হোমে ফিরে যান", on_click=go_home)
+    st.subheader("শ্রেণী অনুযায়ী শিক্ষার্থী তালিকা")
+
+    for cls in CLASS_LIST:
+        try:
+            df = pd.read_excel(file_name, sheet_name=cls)
+        except Exception as e:
+            st.warning(f"{cls}: ডেটা পাওয়া যায়নি ({e})")
+            continue
+
+        with st.expander(f"📘 {cls} — {len(df)} জন শিক্ষার্থী", expanded=False):
+            display_cols = [c for c in ['রোল নাম্বার', 'আইডি', 'নাম', 'গ্রেড', 'জিপিএ'] if c in df.columns]
+            if display_cols:
+                st.dataframe(
+                    df[display_cols].sort_values(by='রোল নাম্বার') if 'রোল নাম্বার' in display_cols else df[display_cols],
+                    use_container_width=True,
+                    hide_index=True,
+                )
+            else:
+                st.dataframe(df, use_container_width=True, hide_index=True)
+
+
+# ==================== PAGE: INPUT ====================
+elif st.session_state.page == "input":
+    st.button("⬅️ হোমে ফিরে যান", on_click=go_home)
+
+    class_choice = st.selectbox("আপনার শ্রেণী নির্বাচন করুন:", CLASS_LIST)
+    roll_input = st.number_input("রোল নম্বর লিখুন:", min_value=1, step=1)
+
+    if st.button("ফলাফল দেখুন"):
+        try:
+            df = pd.read_excel(file_name, sheet_name=class_choice)
+            student = df[df['রোল নাম্বার'].astype(str) == str(int(roll_input))]
+
+            if not student.empty:
+                st.session_state.class_choice = class_choice
+                st.session_state.roll_input = roll_input
+                go_to_result()
+                st.rerun()
+            else:
+                st.warning("এই রোল নম্বরের তথ্য পাওয়া যায়নি।")
+        except Exception as e:
+            st.error(f"অ্যাপে সমস্যা হচ্ছে: {e}")
+
+
+# ==================== PAGE: RESULT (Marksheet) ====================
+elif st.session_state.page == "result":
+    class_choice = st.session_state.class_choice
+    roll_input = st.session_state.roll_input
+
+    try:
+        df = pd.read_excel(file_name, sheet_name=class_choice)
+        student = df[df['রোল নাম্বার'].astype(str) == str(int(roll_input))]
+        row = student.iloc[0]
+
+        st.markdown(f"""
+            <table class="info-table" style="width:100%; border-collapse:collapse; margin-bottom:15px;">
+                <tr><td><b>Roll No</b></td><td>{roll_input}</td>
+                    <td><b>Name</b></td><td>{row['নাম']}</td></tr>
+                <tr><td><b>Class</b></td><td>{class_choice}</td>
+                    <td><b>ID</b></td><td>{row.get('আইডি', '')}</td></tr>
+            </table>
+        """, unsafe_allow_html=True)
+
+        skip_cols = {'রোল নাম্বার', 'নাম', 'আইডি', 'পাসওয়ার্ড', 'মোট নম্বর', 'জিপিএ', 'গ্রেড'}
+        subject_cols = [c for c in df.columns if c not in skip_cols]
+
+        rows_html = "".join(
+            f"<tr><td>{subj}</td><td>{row[subj]}</td></tr>" for subj in subject_cols
+        )
+
+        st.markdown(f"""
+            <table class="grade-table" style="width:100%; border-collapse:collapse;">
+                <tr><th style="text-align:left;">Subject</th><th style="text-align:left;">Marks</th></tr>
+                {rows_html}
+                <tr><td><b>মোট নম্বর</b></td><td><b>{row.get('মোট নম্বর','')}</b></td></tr>
+                <tr><td><b>জিপিএ</b></td><td><b>{row.get('জিপিএ','')}</b></td></tr>
+                <tr><td><b>গ্রেড</b></td><td><b>{row.get('গ্রেড','')}</b></td></tr>
+            </table>
+        """, unsafe_allow_html=True)
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.button("⬅️ ফিরে যান", on_click=go_to_input)
+        with col2:
+            st.button("🏠 হোম", on_click=go_home)
+        with col3:
+            components.html(
+                """
+                <div style="text-align:right;">
+                    <button onclick="window.parent.print()"
+                        style="padding:8px 16px; background:#2d8659; color:white;
+                               border:none; border-radius:6px; cursor:pointer;">
+                        🖨️ প্রিন্ট
+                    </button>
+                </div>
+                """,
+                height=50,
+            )
+
+        st.balloons()
+
+    except Exception as e:
+        st.error(f"অ্যাপে সমস্যা হচ্ছে: {e}")
+        st.button("⬅️ ফিরে যান", on_click=go_to_input)
