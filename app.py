@@ -3,6 +3,7 @@ import pandas as pd
 import streamlit.components.v1 as components
 import os
 import base64
+import hashlib
 
 # Page configuration
 st.set_page_config(
@@ -15,15 +16,28 @@ st.set_page_config(
 FILE_NAME = 'student_data.xlsx'
 CLASS_LIST = ['৬ষ্ঠ শ্রেণী', '৭ম শ্রেণী', '৮ম শ্রেণী']
 
-# Session state initialization
+# ============ ADMIN CREDENTIALS (HARDCODED FOR DEMO) ============
+ADMIN_CREDENTIALS = {
+    "admin": "admin123",
+    "teacher": "teacher123",
+    "principal": "principal123"
+}
+
+# ============ SESSION STATE ============
 if "page" not in st.session_state:
     st.session_state.page = "home"
 if "class_choice" not in st.session_state:
     st.session_state.class_choice = None
 if "roll_input" not in st.session_state:
     st.session_state.roll_input = None
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "username" not in st.session_state:
+    st.session_state.username = None
+if "role" not in st.session_state:
+    st.session_state.role = None
 
-# Navigation functions
+# ============ NAVIGATION FUNCTIONS ============
 def go_home():
     st.session_state.page = "home"
 
@@ -43,9 +57,33 @@ def go_to_routine():
     st.session_state.page = "routine"
 
 def go_to_data_entry():
-    st.session_state.page = "data_entry"
+    if st.session_state.logged_in:
+        st.session_state.page = "data_entry"
+    else:
+        st.warning("⚠️ দয়া করে প্রথমে লগইন করুন!")
+        st.session_state.page = "login"
 
-# ---------------- STYLES ----------------
+def go_to_admin_panel():
+    if st.session_state.logged_in:
+        st.session_state.page = "admin_panel"
+    else:
+        st.warning("⚠️ দয়া করে প্রথমে লগইন করুন!")
+        st.session_state.page = "login"
+
+def go_to_login():
+    st.session_state.page = "login"
+
+def go_to_logout():
+    st.session_state.logged_in = False
+    st.session_state.username = None
+    st.session_state.role = None
+    st.session_state.page = "home"
+
+# ============ HASH FUNCTION ============
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+# ============ STYLES ============
 def apply_styles():
     st.markdown("""
         <style>
@@ -135,12 +173,95 @@ def apply_styles():
                 background: white;
                 color: #1a1a1a !important;
             }
+            
+            /* Login Page Styles */
+            .login-container {
+                max-width: 400px;
+                margin: 50px auto;
+                padding: 40px;
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                border: 1px solid #e8e8e8;
+            }
+            .login-container h2 {
+                text-align: center;
+                color: #1a5f3f;
+                margin-bottom: 30px;
+            }
+            .login-container .input-group {
+                margin-bottom: 20px;
+            }
+            .login-container .input-group label {
+                display: block;
+                font-weight: 600;
+                margin-bottom: 5px;
+                color: #333;
+            }
+            .login-container .input-group input {
+                width: 100%;
+                padding: 12px;
+                border: 2px solid #ddd;
+                border-radius: 8px;
+                font-size: 16px;
+                transition: border-color 0.3s ease;
+            }
+            .login-container .input-group input:focus {
+                border-color: #2d8659;
+                outline: none;
+            }
+            .login-container .login-btn {
+                width: 100%;
+                padding: 14px;
+                background: #2d8659;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 18px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: background 0.3s ease;
+            }
+            .login-container .login-btn:hover {
+                background: #1a5f3f;
+            }
+            .login-container .error-msg {
+                color: #c0392b;
+                text-align: center;
+                margin-top: 10px;
+                font-weight: 500;
+            }
+            .login-container .success-msg {
+                color: #2d8659;
+                text-align: center;
+                margin-top: 10px;
+                font-weight: 500;
+            }
+            .user-info {
+                background: #f0f7f3;
+                padding: 10px 20px;
+                border-radius: 8px;
+                text-align: center;
+                margin-bottom: 20px;
+                border: 1px solid #2d8659;
+            }
+            .user-info span {
+                font-weight: 600;
+                color: #1a5f3f;
+            }
+            .logout-btn {
+                background: #c0392b !important;
+                color: white !important;
+            }
+            .logout-btn:hover {
+                background: #a93226 !important;
+            }
         </style>
     """, unsafe_allow_html=True)
 
 apply_styles()
 
-# Header
+# ============ HEADER ============
 st.markdown("""
     <div class="school-header">
         <h1>🏫 SHARAT CHANDRA NANDALAL</h1>
@@ -149,7 +270,21 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# ---------------- HELPER FUNCTIONS ----------------
+# ============ USER INFO BAR ============
+if st.session_state.logged_in:
+    col1, col2, col3 = st.columns([2, 2, 1])
+    with col1:
+        st.markdown(f"""
+            <div class="user-info">
+                👋 স্বাগতম, <span>{st.session_state.username}</span> ({st.session_state.role})
+            </div>
+        """, unsafe_allow_html=True)
+    with col3:
+        if st.button("🚪 লগআউট", use_container_width=True, key="logout_btn"):
+            go_to_logout()
+            st.rerun()
+
+# ============ HELPER FUNCTIONS ============
 def compute_summary():
     total, failed = 0, 0
     if not os.path.exists(FILE_NAME):
@@ -183,8 +318,57 @@ def get_class_students(class_name):
     except Exception:
         return None
 
+# ==================== PAGE: LOGIN ====================
+if st.session_state.page == "login":
+    st.markdown("""
+        <div class="login-container">
+            <h2>🔐 অ্যাডমিন লগইন</h2>
+    """, unsafe_allow_html=True)
+    
+    with st.form("login_form"):
+        username = st.text_input("👤 ইউজারনেম", placeholder="Enter username")
+        password = st.text_input("🔑 পাসওয়ার্ড", type="password", placeholder="Enter password")
+        
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            login_btn = st.form_submit_button("🔓 লগইন করুন", use_container_width=True)
+        with col2:
+            if st.form_submit_button("🏠 হোম", use_container_width=True):
+                go_home()
+                st.rerun()
+        
+        if login_btn:
+            if username in ADMIN_CREDENTIALS and ADMIN_CREDENTIALS[username] == password:
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                if username == "admin":
+                    st.session_state.role = "অ্যাডমিন"
+                elif username == "teacher":
+                    st.session_state.role = "শিক্ষক"
+                elif username == "principal":
+                    st.session_state.role = "প্রধান শিক্ষক"
+                else:
+                    st.session_state.role = "ইউজার"
+                go_home()
+                st.rerun()
+            else:
+                st.error("❌ ভুল ইউজারনেম বা পাসওয়ার্ড!")
+    
+    st.markdown("""
+        <div style="text-align: center; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+            <p style="font-size: 14px; color: #666;">📌 ডেমো অ্যাকাউন্ট:</p>
+            <p style="font-size: 13px; color: #333;">
+                <b>অ্যাডমিন:</b> admin / admin123<br>
+                <b>শিক্ষক:</b> teacher / teacher123<br>
+                <b>প্রধান শিক্ষক:</b> principal / principal123
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+
 # ==================== PAGE: HOME ====================
-if st.session_state.page == "home":
+elif st.session_state.page == "home":
     total, passed, failed = compute_summary()
     pass_pct = round((passed / total) * 100, 1) if total > 0 else 0
     fail_pct = round((failed / total) * 100, 1) if total > 0 else 0
@@ -206,12 +390,15 @@ if st.session_state.page == "home":
         </div>
     """, unsafe_allow_html=True)
 
+    # Menu cards
     cards = [
         ("👥", "Student List", go_to_student_list),
         ("🧑‍🏫", "Our Teachers", go_to_teachers),
         ("📝", "Data Entry", go_to_data_entry),
         ("⚡", "Result", go_to_input),
         ("🅡", "Class Routine", go_to_routine),
+        ("🔐", "Admin Panel", go_to_admin_panel),
+        ("🔑", "Login", go_to_login),
         ("📄", "Verify Certificate", None),
         ("✅", "Attendance Sheet", None),
         ("📚", "News & Events", None),
@@ -231,6 +418,87 @@ if st.session_state.page == "home":
                         st.rerun()
                     else:
                         st.info(f"ℹ️ '{label}' পেজটি এখনো তৈরি হয়নি।")
+
+# ==================== PAGE: ADMIN PANEL ====================
+elif st.session_state.page == "admin_panel":
+    if not st.session_state.logged_in:
+        st.warning("⚠️ দয়া করে প্রথমে লগইন করুন!")
+        st.button("🔑 লগইন করুন", on_click=go_to_login)
+    else:
+        st.button("⬅️ হোমে ফিরে যান", on_click=go_home, use_container_width=False)
+        
+        st.title("🔐 অ্যাডমিন প্যানেল")
+        st.markdown(f"""
+            <div class="user-info" style="margin-bottom: 20px;">
+                👋 স্বাগতম, <span>{st.session_state.username}</span> ({st.session_state.role})
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # Admin Dashboard Tabs
+        tab1, tab2, tab3, tab4 = st.tabs(["📊 ড্যাশবোর্ড", "👥 ইউজার ম্যানেজ", "📝 ডেটা এন্ট্রি", "⚙️ সেটিংস"])
+        
+        with tab1:
+            st.subheader("📊 অ্যাডমিন ড্যাশবোর্ড")
+            
+            col1, col2, col3 = st.columns(3)
+            
+            # Get stats
+            total_students = 0
+            total_classes = len(CLASS_LIST)
+            
+            for cls in CLASS_LIST:
+                try:
+                    df = pd.read_excel(FILE_NAME, sheet_name=cls)
+                    total_students += len(df)
+                except:
+                    pass
+            
+            with col1:
+                st.metric("📚 মোট শ্রেণী", total_classes)
+            with col2:
+                st.metric("👨‍🎓 মোট শিক্ষার্থী", total_students)
+            with col3:
+                st.metric("👤 ইউজার", len(ADMIN_CREDENTIALS))
+            
+            st.write("---")
+            st.info("ℹ️ অ্যাডমিন প্যানেলে স্বাগতম। এখান থেকে আপনি ডেটা ম্যানেজ করতে পারবেন।")
+        
+        with tab2:
+            st.subheader("👥 ইউজার ম্যানেজমেন্ট")
+            
+            st.write("বর্তমান ইউজার:")
+            user_data = pd.DataFrame({
+                "ইউজারনেম": list(ADMIN_CREDENTIALS.keys()),
+                "পাসওয়ার্ড": ["••••••••"] * len(ADMIN_CREDENTIALS)
+            })
+            st.dataframe(user_data, use_container_width=True, hide_index=True)
+            
+            st.warning("⚠️ নতুন ইউজার যোগ করতে চাইলে ডেভেলপারের সাথে যোগাযোগ করুন।")
+        
+        with tab3:
+            st.subheader("📝 ডেটা এন্ট্রি")
+            st.info("📌 ডেটা এন্ট্রি করতে 'Data Entry' বাটনে ক্লিক করুন।")
+            
+            if st.button("📝 Data Entry পেজে যান", use_container_width=True):
+                go_to_data_entry()
+                st.rerun()
+        
+        with tab4:
+            st.subheader("⚙️ সেটিংস")
+            
+            st.write("**ডেটা ফাইল ইনফরমেশন:**")
+            if os.path.exists(FILE_NAME):
+                file_size = os.path.getsize(FILE_NAME)
+                st.success(f"✅ ফাইল পাওয়া গেছে! ({file_size / 1024:.2f} KB)")
+            else:
+                st.error("❌ ডেটা ফাইল পাওয়া যায়নি!")
+            
+            st.write("---")
+            
+            # Change Password Option
+            with st.expander("🔑 পাসওয়ার্ড পরিবর্তন করুন"):
+                st.warning("⚠️ এই ফিচারটি এখনো ডেভেলপ করা হচ্ছে।")
+                st.info("💡 পাসওয়ার্ড পরিবর্তন করতে ডেভেলপারের সাথে যোগাযোগ করুন।")
 
 # ==================== PAGE: STUDENT LIST ====================
 elif st.session_state.page == "student_list":
@@ -285,99 +553,103 @@ elif st.session_state.page == "routine":
 
 # ==================== PAGE: DATA ENTRY ====================
 elif st.session_state.page == "data_entry":
-    st.button("⬅️ হোমে ফিরে যান", on_click=go_home, use_container_width=False)
-    
-    st.title("📝 ডেটা এন্ট্রি")
-    
-    tab1, tab2 = st.tabs(["➕ নতুন শিক্ষার্থী", "📊 সব শিক্ষার্থী"])
-    
-    with tab1:
-        with st.form("entry_form"):
-            st.subheader("শিক্ষার্থীর তথ্য দিন")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                class_name = st.selectbox("শ্রেণী", CLASS_LIST)
-                roll = st.number_input("রোল নাম্বার", min_value=1, step=1)
-                name = st.text_input("শিক্ষার্থীর নাম")
+    if not st.session_state.logged_in:
+        st.warning("⚠️ ডেটা এন্ট্রি করতে হলে লগইন করতে হবে!")
+        st.button("🔑 লগইন করুন", on_click=go_to_login)
+    else:
+        st.button("⬅️ হোমে ফিরে যান", on_click=go_home, use_container_width=False)
+        
+        st.title("📝 ডেটা এন্ট্রি")
+        
+        tab1, tab2 = st.tabs(["➕ নতুন শিক্ষার্থী", "📊 সব শিক্ষার্থী"])
+        
+        with tab1:
+            with st.form("entry_form"):
+                st.subheader("শিক্ষার্থীর তথ্য দিন")
                 
-            with col2:
-                bangla = st.number_input("বাংলা", min_value=0, max_value=100, step=1)
-                english = st.number_input("ইংরেজি", min_value=0, max_value=100, step=1)
-                math = st.number_input("গণিত", min_value=0, max_value=100, step=1)
-                science = st.number_input("বিজ্ঞান", min_value=0, max_value=100, step=1)
-            
-            submitted = st.form_submit_button("💾 ডেটা সংরক্ষণ করুন")
-            
-            if submitted:
-                if name and roll:
-                    marks = [bangla, english, math, science]
-                    total = sum(marks)
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    class_name = st.selectbox("শ্রেণী", CLASS_LIST)
+                    roll = st.number_input("রোল নাম্বার", min_value=1, step=1)
+                    name = st.text_input("শিক্ষার্থীর নাম")
                     
-                    gpa_points = []
-                    for mark in marks:
-                        if mark >= 80: gpa_points.append(5.00)
-                        elif mark >= 70: gpa_points.append(4.00)
-                        elif mark >= 60: gpa_points.append(3.50)
-                        elif mark >= 50: gpa_points.append(3.00)
-                        elif mark >= 40: gpa_points.append(2.00)
-                        elif mark >= 33: gpa_points.append(1.00)
-                        else: gpa_points.append(0.00)
-                    
-                    gpa = sum(gpa_points) / len(gpa_points)
-                    
-                    if gpa >= 5.00: grade = "A+"
-                    elif gpa >= 4.00: grade = "A"
-                    elif gpa >= 3.50: grade = "A-"
-                    elif gpa >= 3.00: grade = "B"
-                    elif gpa >= 2.00: grade = "C"
-                    elif gpa >= 1.00: grade = "D"
-                    else: grade = "F"
-                    
-                    new_data = pd.DataFrame({
-                        'রোল নাম্বার': [roll],
-                        'নাম': [name],
-                        'আইডি': [''],
-                        'বাংলা': [bangla],
-                        'ইংরেজি': [english],
-                        'গণিত': [math],
-                        'বিজ্ঞান': [science],
-                        'মোট নম্বর': [total],
-                        'জিপিএ': [round(gpa, 2)],
-                        'গ্রেড': [grade]
-                    })
-                    
-                    try:
-                        if os.path.exists(FILE_NAME):
-                            existing = pd.read_excel(FILE_NAME, sheet_name=class_name)
-                            updated = pd.concat([existing, new_data], ignore_index=True)
-                            with pd.ExcelWriter(FILE_NAME, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
-                                updated.to_excel(writer, sheet_name=class_name, index=False)
-                        else:
-                            with pd.ExcelWriter(FILE_NAME, engine='openpyxl') as writer:
-                                new_data.to_excel(writer, sheet_name=class_name, index=False)
+                with col2:
+                    bangla = st.number_input("বাংলা", min_value=0, max_value=100, step=1)
+                    english = st.number_input("ইংরেজি", min_value=0, max_value=100, step=1)
+                    math = st.number_input("গণিত", min_value=0, max_value=100, step=1)
+                    science = st.number_input("বিজ্ঞান", min_value=0, max_value=100, step=1)
+                
+                submitted = st.form_submit_button("💾 ডেটা সংরক্ষণ করুন")
+                
+                if submitted:
+                    if name and roll:
+                        marks = [bangla, english, math, science]
+                        total = sum(marks)
                         
-                        st.success(f"✅ {name} এর ডেটা সংরক্ষণ করা হয়েছে!")
-                        st.balloons()
-                    except Exception as e:
-                        st.error(f"❌ সমস্যা: {str(e)}")
-                else:
-                    st.warning("⚠️ নাম এবং রোল নাম্বার দিন!")
-    
-    with tab2:
-        st.subheader("সব শিক্ষার্থীর ডেটা")
-        if os.path.exists(FILE_NAME):
-            for cls in CLASS_LIST:
-                try:
-                    df = pd.read_excel(FILE_NAME, sheet_name=cls)
-                    st.write(f"### {cls} - {len(df)} জন")
-                    st.dataframe(df, use_container_width=True, hide_index=True)
-                    st.write("---")
-                except:
-                    pass
-        else:
-            st.info("📭 কোনো ডেটা নেই")
+                        gpa_points = []
+                        for mark in marks:
+                            if mark >= 80: gpa_points.append(5.00)
+                            elif mark >= 70: gpa_points.append(4.00)
+                            elif mark >= 60: gpa_points.append(3.50)
+                            elif mark >= 50: gpa_points.append(3.00)
+                            elif mark >= 40: gpa_points.append(2.00)
+                            elif mark >= 33: gpa_points.append(1.00)
+                            else: gpa_points.append(0.00)
+                        
+                        gpa = sum(gpa_points) / len(gpa_points)
+                        
+                        if gpa >= 5.00: grade = "A+"
+                        elif gpa >= 4.00: grade = "A"
+                        elif gpa >= 3.50: grade = "A-"
+                        elif gpa >= 3.00: grade = "B"
+                        elif gpa >= 2.00: grade = "C"
+                        elif gpa >= 1.00: grade = "D"
+                        else: grade = "F"
+                        
+                        new_data = pd.DataFrame({
+                            'রোল নাম্বার': [roll],
+                            'নাম': [name],
+                            'আইডি': [''],
+                            'বাংলা': [bangla],
+                            'ইংরেজি': [english],
+                            'গণিত': [math],
+                            'বিজ্ঞান': [science],
+                            'মোট নম্বর': [total],
+                            'জিপিএ': [round(gpa, 2)],
+                            'গ্রেড': [grade]
+                        })
+                        
+                        try:
+                            if os.path.exists(FILE_NAME):
+                                existing = pd.read_excel(FILE_NAME, sheet_name=class_name)
+                                updated = pd.concat([existing, new_data], ignore_index=True)
+                                with pd.ExcelWriter(FILE_NAME, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+                                    updated.to_excel(writer, sheet_name=class_name, index=False)
+                            else:
+                                with pd.ExcelWriter(FILE_NAME, engine='openpyxl') as writer:
+                                    new_data.to_excel(writer, sheet_name=class_name, index=False)
+                            
+                            st.success(f"✅ {name} এর ডেটা সংরক্ষণ করা হয়েছে!")
+                            st.balloons()
+                        except Exception as e:
+                            st.error(f"❌ সমস্যা: {str(e)}")
+                    else:
+                        st.warning("⚠️ নাম এবং রোল নাম্বার দিন!")
+        
+        with tab2:
+            st.subheader("সব শিক্ষার্থীর ডেটা")
+            if os.path.exists(FILE_NAME):
+                for cls in CLASS_LIST:
+                    try:
+                        df = pd.read_excel(FILE_NAME, sheet_name=cls)
+                        st.write(f"### {cls} - {len(df)} জন")
+                        st.dataframe(df, use_container_width=True, hide_index=True)
+                        st.write("---")
+                    except:
+                        pass
+            else:
+                st.info("📭 কোনো ডেটা নেই")
 
 # ==================== PAGE: INPUT ====================
 elif st.session_state.page == "input":
@@ -528,7 +800,7 @@ elif st.session_state.page == "result":
             st.error(f"❌ সমস্যা: {str(e)}")
             st.button("⬅️ ফিরে যান", on_click=go_to_input, use_container_width=True)
 
-# ---------------- PRINT HTML FUNCTION ----------------
+# ============ PRINT HTML FUNCTION ============
 def create_printable_html(student_data, class_name, roll_no):
     row = student_data.iloc[0]
     skip_cols = {'রোল নাম্বার', 'নাম', 'আইডি', 'পাসওয়ার্ড', 'মোট নম্বর', 'জিপিএ', 'গ্রেড'}
