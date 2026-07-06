@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import streamlit.components.v1 as components
 import os
+import base64
 from io import BytesIO
 
 # Page configuration
@@ -168,6 +169,32 @@ def apply_styles():
                 border-radius: 8px;
                 border-left-width: 4px;
             }
+            
+            /* Print styles */
+            @media print {
+                .no-print {
+                    display: none !important;
+                }
+                .print-only {
+                    display: block !important;
+                }
+                .grade-table {
+                    box-shadow: none !important;
+                }
+                .school-header {
+                    background: #2d8659 !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                .grade-table th {
+                    background: #2d8659 !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                .summary-box {
+                    border: 1px solid #ddd !important;
+                }
+            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -218,6 +245,166 @@ def get_class_students(class_name):
         return df
     except Exception:
         return None
+
+def generate_print_html(student_data, class_name, roll_no):
+    """Generate HTML for printing"""
+    row = student_data.iloc[0]
+    skip_cols = {'রোল নাম্বার', 'নাম', 'আইডি', 'পাসওয়ার্ড', 'মোট নম্বর', 'জিপিএ', 'গ্রেড'}
+    subject_cols = [c for c in student_data.columns if c not in skip_cols]
+    
+    # Build marks table
+    marks_html = ""
+    for subj in subject_cols:
+        marks_html += f"<tr><td>{subj}</td><td>{row[subj]}</td></tr>"
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Result - {row['নাম']}</title>
+        <style>
+            body {{
+                font-family: 'Arial', sans-serif;
+                padding: 40px;
+                max-width: 800px;
+                margin: 0 auto;
+                background: white;
+            }}
+            .school-header {{
+                background: linear-gradient(135deg, #1a5f3f, #2d8659);
+                padding: 25px 20px;
+                border-radius: 12px;
+                text-align: center;
+                color: white;
+                margin-bottom: 25px;
+            }}
+            .school-header h1 {{ margin: 0; font-size: 24px; }}
+            .school-header h3 {{ margin: 8px 0 0 0; font-weight: 400; letter-spacing: 3px; opacity: 0.9; }}
+            .info-table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+                background: #f8fcf9;
+                border-radius: 8px;
+                overflow: hidden;
+            }}
+            .info-table td {{
+                padding: 10px 15px;
+                border-bottom: 1px solid #e0e0e0;
+            }}
+            .grade-table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            }}
+            .grade-table th {{
+                background: #2d8659;
+                color: white;
+                padding: 12px;
+                text-align: left;
+                font-weight: 600;
+            }}
+            .grade-table td {{
+                padding: 10px 12px;
+                border-bottom: 1px solid #f0f0f0;
+            }}
+            .grade-table tr:last-child td {{
+                border-bottom: none;
+            }}
+            .grade-table tr:nth-child(even) {{
+                background: #f8fcf9;
+            }}
+            .footer {{
+                text-align: center;
+                margin-top: 40px;
+                padding-top: 20px;
+                border-top: 2px solid #e0e0e0;
+                color: #666;
+                font-size: 12px;
+            }}
+            .highlight {{
+                background: #f8fcf9;
+                font-weight: bold;
+            }}
+            .print-date {{
+                text-align: right;
+                color: #666;
+                font-size: 12px;
+                margin-bottom: 20px;
+            }}
+            @media print {{
+                body {{ padding: 20px; }}
+                .no-print {{ display: none; }}
+                .grade-table {{ box-shadow: none; }}
+                .school-header {{ background: #2d8659 !important; -webkit-print-color-adjust: exact; }}
+                .grade-table th {{ background: #2d8659 !important; -webkit-print-color-adjust: exact; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="school-header">
+            <h1>🏫 SHARAT CHANDRA NANDALAL</h1>
+            <h3>PUBLIC SCHOOL AND COLLEGE</h3>
+            <h3 style="font-size: 14px; margin-top: 5px;">SCHOOL PORTAL - MARKSHEET</h3>
+        </div>
+        
+        <div class="print-date">
+            Printing Date: {pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S')}
+        </div>
+        
+        <table class="info-table">
+            <tr>
+                <td><b>🎯 রোল নম্বর</b></td>
+                <td>{roll_no}</td>
+                <td><b>👤 নাম</b></td>
+                <td>{row['নাম']}</td>
+            </tr>
+            <tr>
+                <td><b>📚 শ্রেণী</b></td>
+                <td>{class_name}</td>
+                <td><b>🆔 আইডি</b></td>
+                <td>{row.get('আইডি', '')}</td>
+            </tr>
+        </table>
+        
+        <table class="grade-table">
+            <tr>
+                <th>📖 বিষয়</th>
+                <th>📊 প্রাপ্ত নম্বর</th>
+            </tr>
+            {marks_html}
+            <tr class="highlight">
+                <td>📈 মোট নম্বর</td>
+                <td>{row.get('মোট নম্বর', '')}</td>
+            </tr>
+            <tr class="highlight">
+                <td>⭐ জিপিএ</td>
+                <td>{row.get('জিপিএ', '')}</td>
+            </tr>
+            <tr class="highlight">
+                <td>🏅 গ্রেড</td>
+                <td>{row.get('গ্রেড', '')}</td>
+            </tr>
+        </table>
+        
+        <div class="footer">
+            <p>© 2026 Sharat Chandra Nandalal Public School and College</p>
+            <p>This is a system generated marksheet. No signature required.</p>
+        </div>
+        
+        <div class="no-print" style="text-align: center; margin-top: 30px;">
+            <button onclick="window.print()" style="padding: 12px 30px; background: #2d8659; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                🖨️ Click to Print
+            </button>
+        </div>
+    </body>
+    </html>
+    """
+    return html_content
 
 # ==================== PAGE: HOME ====================
 if st.session_state.page == "home":
@@ -346,7 +533,6 @@ elif st.session_state.page == "input":
         roll_input = st.number_input("রোল নম্বর লিখুন:", min_value=1, step=1, key="roll_input_field")
         
         if st.button("🔍 ফলাফল দেখুন", use_container_width=True):
-            # Convert roll_input to int properly
             try:
                 roll_number = int(roll_input)
                 student = load_student_data(class_choice, roll_number)
@@ -433,13 +619,23 @@ elif st.session_state.page == "result":
                         </table>
                     """, unsafe_allow_html=True)
                     
-                    # Action buttons
-                    col1, col2, col3 = st.columns([1, 1, 1])
+                    # Action buttons - Print options
+                    st.markdown("---")
+                    st.subheader("🖨️ Print Options")
+                    
+                    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
                     with col1:
-                        st.button("⬅️ ফিরে যান", on_click=go_to_input, use_container_width=True)
+                        if st.button("⬅️ ফিরে যান", use_container_width=True):
+                            go_to_input()
+                            st.rerun()
+                    
                     with col2:
-                        st.button("🏠 হোম", on_click=go_home, use_container_width=True)
+                        if st.button("🏠 হোম", use_container_width=True):
+                            go_home()
+                            st.rerun()
+                    
                     with col3:
+                        # Method 1: Simple window.print()
                         components.html(
                             """
                             <div style="text-align:center;">
@@ -448,12 +644,34 @@ elif st.session_state.page == "result":
                                            color: white; border: none; border-radius: 8px; 
                                            cursor: pointer; font-size: 16px; font-weight: 500;
                                            transition: all 0.3s ease;">
-                                    🖨️ প্রিন্ট করুন
+                                    🖨️ প্রিন্ট (Direct)
                                 </button>
                             </div>
                             """,
                             height=50,
                         )
+                    
+                    with col4:
+                        # Method 2: New window with formatted content
+                        html_content = generate_print_html(student, class_choice, roll_input)
+                        b64 = base64.b64encode(html_content.encode()).decode()
+                        href = f'data:text/html;base64,{b64}'
+                        
+                        st.markdown(f"""
+                            <div style="text-align:center;">
+                                <a href="{href}" target="_blank"
+                                    style="display: inline-block; width: 100%; padding: 10px; 
+                                           background: #1a5f3f; color: white; border: none; 
+                                           border-radius: 8px; cursor: pointer; font-size: 16px; 
+                                           font-weight: 500; text-decoration: none; text-align: center;
+                                           transition: all 0.3s ease;">
+                                    🖨️ প্রিন্ট (New Window)
+                                </a>
+                            </div>
+                        """, unsafe_allow_html=True)
+                    
+                    # Additional print instruction
+                    st.info("💡 **Tip:** 'Direct Print' বাটনে ক্লিক করুন অথবা 'New Window' এ ওপেন করে প্রিন্ট করুন।")
                     
                     st.balloons()
                     
@@ -471,4 +689,4 @@ st.markdown(
     </div>
     """,
     unsafe_allow_html=True
-                        )
+)
