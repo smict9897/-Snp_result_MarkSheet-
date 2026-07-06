@@ -14,7 +14,7 @@ try:
 
     if st.button("ফলাফল দেখুন"):
         student = df[df['রোল নাম্বার'] == roll_input]
-
+        
         if not student.empty:
             st.write(f"**নাম:** {student['নাম'].values[0]}")
             st.markdown("---")
@@ -24,10 +24,3 @@ try:
             st.warning("দুঃখিত, এই রোল নাম্বারের কোনো তথ্য পাওয়া যায়নি।")
 except Exception as e:
     st.error(f"অ্যাপে সমস্যা হচ্ছে: {e}")
-            total_obt = marks_df['Obt. Marks'].sum()
-            st.write(f"### Total Obtained Marks: {total_obt} / {len(marks_df)*100}")
-        else:
-            st.warning("দুঃখিত, এই রোল নাম্বারের কোনো তথ্য পাওয়া যায়নি।")
-            
-except Exception as e:
-    st.error(f"এরর দেখা দিয়েছে: {e}")
