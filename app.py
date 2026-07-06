@@ -1,8 +1,44 @@
 import streamlit as st
 import pandas as pd
 import streamlit.components.v1 as components
+import base64
 
 st.set_page_config(page_title="Marksheet", layout="centered")
+
+file_name = 'student_data.xlsx'
+
+# ---- session state defaults ----
+if "page" not in st.session_state:
+    st.session_state.page = "input"
+if "class_choice" not in st.session_state:
+    st.session_state.class_choice = None
+if "roll_input" not in st.session_state:
+    st.session_state.roll_input = None
+
+
+def go_to_result():
+    st.session_state.page = "result"
+
+
+def go_back():
+    st.session_state.page = "input"
+
+
+def set_background(image_path):
+    with open(image_path, "rb") as f:
+        encoded = base64.b64encode(f.read()).decode()
+    st.markdown(f"""
+        <style>
+        .stApp {{
+            background-image: linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
+                               url("data:image/jpeg;base64,{encoded}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }}
+        </style>
+    """, unsafe_allow_html=True)
+
 
 st.markdown("""
     <style>
@@ -24,33 +60,15 @@ st.markdown("""
 
 st.markdown("""
     <div class="school-header">
-        <h3>শরৎচন্দ্র নন্দলাল পাবলিক উচ্চ ও কলেজ</h3>
-         <h1> বাল্লা জগন্নাথপুর, নবীগঞ্জ, হবিগঞ্জ</h1>
+        <h1>SHARAT CHANDRA NANDALAL PUBLIC SCHOOL AND COLLEGE</h1>
         <h3>MARKSHEET</h3>
     </div>
 """, unsafe_allow_html=True)
 
-file_name = 'student_data.xlsx'
-
-# ---- session state defaults ----
-if "page" not in st.session_state:
-    st.session_state.page = "input"
-if "class_choice" not in st.session_state:
-    st.session_state.class_choice = None
-if "roll_input" not in st.session_state:
-    st.session_state.roll_input = None
-
-
-def go_to_result():
-    st.session_state.page = "result"
-
-
-def go_back():
-    st.session_state.page = "input"
-
-
 # ---------------- PAGE 1: INPUT ----------------
 if st.session_state.page == "input":
+    set_background("assembly.jpg")   # <-- put your photo here, see note below
+
     class_choice = st.selectbox("আপনার শ্রেণী নির্বাচন করুন:", ['৬ষ্ঠ শ্রেণী', '৭ম শ্রেণী', '৮ম শ্রেণী'])
     roll_input = st.number_input("রোল নম্বর লিখুন:", min_value=1, step=1)
 
