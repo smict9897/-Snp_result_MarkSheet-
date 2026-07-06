@@ -1,34 +1,29 @@
 import streamlit as st
 import pandas as pd
-import streamlit.components.v1 as components
 import os
+
+# প্রয়োজনীয় লাইব্রেরি: pip install pandas openpyxl
 
 st.set_page_config(page_title="School Portal", layout="centered")
 
 file_name = 'student_data.xlsx'
-CLASS_LIST = ['à§¬à¦·à§à¦  à¦¶à§à¦°à§‡à¦£à§€', 'à§­à¦® à¦¶à§à¦°à§‡à¦£à§€', 'à§®à¦® à¦¶à§à¦°à§‡à¦£à§€']
+CLASS_LIST = ['৬ষ্ঠ শ্রেণী', '৭ম শ্রেণী', '৮ম শ্রেণী']
 
 # ---- session state ----
 if "page" not in st.session_state:
     st.session_state.page = "home"
-if "class_choice" not in st.session_state:
-    st.session_state.class_choice = None
-if "roll_input" not in st.session_state:
-    st.session_state.roll_input = None
-
 
 def go_home():
     st.session_state.page = "home"
 
-def go_to_input():
-    st.session_state.page = "input"
-
-def go_to_result():
-    st.session_state.page = "result"
+def go_to_entry():
+    st.session_state.page = "entry"
 
 def go_to_student_list():
     st.session_state.page = "student_list"
 
+def go_to_input():
+    st.session_state.page = "input"
 
 # ---------------- SHARED STYLES ----------------
 st.markdown("""
@@ -43,10 +38,6 @@ st.markdown("""
         }
         .school-header h1 { margin: 0; font-size: 26px; }
         .school-header h3 { margin: 5px 0 0 0; font-weight: 400; letter-spacing: 3px; }
-        .info-table td { padding: 6px 10px; }
-        .grade-table th { background-color: #2d8659; color: white; padding: 8px; }
-        .grade-table td { padding: 8px; border-bottom: 1px solid #ddd; }
-
         .card-btn button {
             width: 100%;
             height: 120px;
@@ -80,7 +71,6 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-
 def compute_summary():
     total, failed = 0, 0
     if not os.path.exists(file_name):
@@ -88,41 +78,35 @@ def compute_summary():
     for cls in CLASS_LIST:
         try:
             df = pd.read_excel(file_name, sheet_name=cls)
-        except Exception:
+            if 'গ্রেড' in df.columns:
+                total += len(df)
+                failed += df['গ্রেড'].astype(str).str.upper().eq('F').sum()
+        except:
             continue
-        if 'à¦—à§à¦°à§‡à¦¡' not in df.columns:
-            continue
-        total += len(df)
-        failed += df['à¦—à§à¦°à§‡à¦¡'].astype(str).str.upper().eq('F').sum()
     passed = total - failed
     return total, passed, failed
 
-
 # ==================== PAGE: HOME ====================
 if st.session_state.page == "home":
-
     total, passed, failed = compute_summary()
     pass_pct = round((passed / total) * 100, 1) if total else 0
     fail_pct = round((failed / total) * 100, 1) if total else 0
 
     st.markdown(f"""
         <div class="summary-box">
-            <div><div class="num">{total}</div><div class="label">à¦®à§‹à¦Ÿ à¦¶à¦¿à¦•à§à¦·à¦¾à¦°à§à¦¥à§€</div></div>
-            <div><div class="num" style="color:#2d8659;">{pass_pct}%</div><div class="label">à¦ªà¦¾à¦¸</div></div>
-            <div><div class="num" style="color:#c0392b;">{fail_pct}%</div><div class="label">à¦«à§‡à¦²</div></div>
+            <div><div class="num">{total}</div><div class="label">মোট শিক্ষার্থী</div></div>
+            <div><div class="num" style="color:#2d8659;">{pass_pct}%</div><div class="label">পাস</div></div>
+            <div><div class="num" style="color:#c0392b;">{fail_pct}%</div><div class="label">ফেল</div></div>
         </div>
     """, unsafe_allow_html=True)
 
     cards = [
-        ("ðŸ‘¥", "Student List", go_to_student_list),
-        ("ðŸ§‘â€ðŸ«", "Our Teachers", None),
-        ("ðŸ“„", "Verify Certificate", None),
-        ("âœ…", "Attendance Sheet", None),
-        ("âš¡", "Result", go_to_input),
-        ("ðŸ””", "Exam Schedule", None),
-        ("ðŸ“š", "News", None),
-        ("ðŸ…¡", "Routine", None),
-        ("ðŸ–¼ï¸", "Gallery", None),
+        ("➕", "Data Entry", go_to_entry),
+        ("👥", "Student List", go_to_student_list),
+        ("⚡", "Result", go_to_input),
+        ("🧑‍🏫", "Our Teachers", None),
+        ("📄", "Verify Certificate", None),
+        ("✅", "Attendance Sheet", None),
     ]
 
     for i in range(0, len(cards), 2):
@@ -137,113 +121,56 @@ if st.session_state.page == "home":
                     action()
                     st.rerun()
                 elif clicked:
-                    st.info(f"'{label}' à¦ªà§‡à¦œà¦Ÿà¦¿ à¦à¦–à¦¨à§‹ à¦¤à§ˆà¦°à¦¿ à¦¹à¦¯à¦¼à¦¨à¦¿à¥¤")
+                    st.info(f"'{label}' পেজটি এখনো তৈরি হয়নি।")
 
-
-# ==================== PAGE: STUDENT LIST ====================
-elif st.session_state.page == "student_list":
-    st.button("â¬…ï¸ à¦¹à§‹à¦®à§‡ à¦«à¦¿à¦°à§‡ à¦¯à¦¾à¦¨", on_click=go_home)
-    st.subheader("à¦¶à§à¦°à§‡à¦£à§€ à¦…à¦¨à§à¦¯à¦¾à¦¯à¦¼à§€ à¦¶à¦¿à¦•à§à¦·à¦¾à¦°à§à¦¥à§€ à¦¤à¦¾à¦²à¦¿à¦•à¦¾")
-
-    for cls in CLASS_LIST:
-        try:
-            df = pd.read_excel(file_name, sheet_name=cls)
-        except Exception as e:
-            st.warning(f"{cls}: à¦¡à§‡à¦Ÿà¦¾ à¦ªà¦¾à¦“à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¯à¦¼à¦¨à¦¿ ({e})")
-            continue
-
-        with st.expander(f"ðŸ“˜ {cls} â€” {len(df)} à¦œà¦¨ à¦¶à¦¿à¦•à§à¦·à¦¾à¦°à§à¦¥à§€", expanded=False):
-            display_cols = [c for c in ['à¦°à§‹à¦² à¦¨à¦¾à¦®à§à¦¬à¦¾à¦°', 'à¦†à¦‡à¦¡à¦¿', 'à¦¨à¦¾à¦®', 'à¦—à§à¦°à§‡à¦¡', 'à¦œà¦¿à¦ªà¦¿à¦'] if c in df.columns]
-            if display_cols:
-                st.dataframe(
-                    df[display_cols].sort_values(by='à¦°à§‹à¦² à¦¨à¦¾à¦®à§à¦¬à¦¾à¦°') if 'à¦°à§‹à¦² à¦¨à¦¾à¦®à§à¦¬à¦¾à¦°' in display_cols else df[display_cols],
-                    use_container_width=True,
-                    hide_index=True,
-                )
-            else:
-                st.dataframe(df, use_container_width=True, hide_index=True)
-
-
-# ==================== PAGE: INPUT ====================
-elif st.session_state.page == "input":
-    st.button("â¬…ï¸ à¦¹à§‹à¦®à§‡ à¦«à¦¿à¦°à§‡ à¦¯à¦¾à¦¨", on_click=go_home)
-
-    class_choice = st.selectbox("à¦†à¦ªà¦¨à¦¾à¦° à¦¶à§à¦°à§‡à¦£à§€ à¦¨à¦¿à¦°à§à¦¬à¦¾à¦šà¦¨ à¦•à¦°à§à¦¨:", CLASS_LIST)
-    roll_input = st.number_input("à¦°à§‹à¦² à¦¨à¦®à§à¦¬à¦° à¦²à¦¿à¦–à§à¦¨:", min_value=1, step=1)
-
-    if st.button("à¦«à¦²à¦¾à¦«à¦² à¦¦à§‡à¦–à§à¦¨"):
-        try:
-            df = pd.read_excel(file_name, sheet_name=class_choice)
-            student = df[df['à¦°à§‹à¦² à¦¨à¦¾à¦®à§à¦¬à¦¾à¦°'].astype(str) == str(int(roll_input))]
-
-            if not student.empty:
-                st.session_state.class_choice = class_choice
-                st.session_state.roll_input = roll_input
-                go_to_result()
-                st.rerun()
-            else:
-                st.warning("à¦à¦‡ à¦°à§‹à¦² à¦¨à¦®à§à¦¬à¦°à§‡à¦° à¦¤à¦¥à§à¦¯ à¦ªà¦¾à¦“à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¯à¦¼à¦¨à¦¿à¥¤")
-        except Exception as e:
-            st.error(f"à¦…à§à¦¯à¦¾à¦ªà§‡ à¦¸à¦®à¦¸à§à¦¯à¦¾ à¦¹à¦šà§à¦›à§‡: {e}")
-
-
-# ==================== PAGE: RESULT (Marksheet) ====================
-elif st.session_state.page == "result":
-    class_choice = st.session_state.class_choice
-    roll_input = st.session_state.roll_input
-
-    try:
-        df = pd.read_excel(file_name, sheet_name=class_choice)
-        student = df[df['à¦°à§‹à¦² à¦¨à¦¾à¦®à§à¦¬à¦¾à¦°'].astype(str) == str(int(roll_input))]
-        row = student.iloc[0]
-
-        st.markdown(f"""
-            <table class="info-table" style="width:100%; border-collapse:collapse; margin-bottom:15px;">
-                <tr><td><b>Roll No</b></td><td>{roll_input}</td>
-                    <td><b>Name</b></td><td>{row['à¦¨à¦¾à¦®']}</td></tr>
-                <tr><td><b>Class</b></td><td>{class_choice}</td>
-                    <td><b>ID</b></td><td>{row.get('à¦†à¦‡à¦¡à¦¿', '')}</td></tr>
-            </table>
-        """, unsafe_allow_html=True)
-
-        skip_cols = {'à¦°à§‹à¦² à¦¨à¦¾à¦®à§à¦¬à¦¾à¦°', 'à¦¨à¦¾à¦®', 'à¦†à¦‡à¦¡à¦¿', 'à¦ªà¦¾à¦¸à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡', 'à¦®à§‹à¦Ÿ à¦¨à¦®à§à¦¬à¦°', 'à¦œà¦¿à¦ªà¦¿à¦', 'à¦—à§à¦°à§‡à¦¡'}
-        subject_cols = [c for c in df.columns if c not in skip_cols]
-
-        rows_html = "".join(
-            f"<tr><td>{subj}</td><td>{row[subj]}</td></tr>" for subj in subject_cols
-        )
-
-        st.markdown(f"""
-            <table class="grade-table" style="width:100%; border-collapse:collapse;">
-                <tr><th style="text-align:left;">Subject</th><th style="text-align:left;">Marks</th></tr>
-                {rows_html}
-                <tr><td><b>à¦®à§‹à¦Ÿ à¦¨à¦®à§à¦¬à¦°</b></td><td><b>{row.get('à¦®à§‹à¦Ÿ à¦¨à¦®à§à¦¬à¦°','')}</b></td></tr>
-                <tr><td><b>à¦œà¦¿à¦ªà¦¿à¦</b></td><td><b>{row.get('à¦œà¦¿à¦ªà¦¿à¦','')}</b></td></tr>
-                <tr><td><b>à¦—à§à¦°à§‡à¦¡</b></td><td><b>{row.get('à¦—à§à¦°à§‡à¦¡','')}</b></td></tr>
-            </table>
-        """, unsafe_allow_html=True)
-
-        col1, col2, col3 = st.columns(3)
+# ==================== PAGE: DATA ENTRY ====================
+elif st.session_state.page == "entry":
+    st.subheader("নতুন শিক্ষার্থীর তথ্য যোগ করুন")
+    
+    with st.form("entry_form", clear_on_submit=True):
+        col1, col2 = st.columns(2)
         with col1:
-            st.button("â¬…ï¸ à¦«à¦¿à¦°à§‡ à¦¯à¦¾à¦¨", on_click=go_to_input)
+            cls = st.selectbox("শ্রেণী নির্বাচন করুন", CLASS_LIST)
+            name = st.text_input("শিক্ষার্থীর নাম")
         with col2:
-            st.button("ðŸ  à¦¹à§‹à¦®", on_click=go_home)
-        with col3:
-            components.html(
-                """
-                <div style="text-align:right;">
-                    <button onclick="window.parent.print()"
-                        style="padding:8px 16px; background:#2d8659; color:white;
-                               border:none; border-radius:6px; cursor:pointer;">
-                        ðŸ–¨ï¸ à¦ªà§à¦°à¦¿à¦¨à§à¦Ÿ
-                    </button>
-                </div>
-                """,
-                height=50,
-            )
+            roll = st.number_input("রোল নম্বর", min_value=1, step=1)
+            grade = st.text_input("গ্রেড (যেমন: A, A+, F)")
+        
+        submitted = st.form_submit_button("তথ্য সংরক্ষণ করুন")
+        
+        if submitted:
+            if name and grade:
+                new_data = pd.DataFrame({'নাম': [name], 'রোল': [roll], 'গ্রেড': [grade]})
+                
+                if os.path.exists(file_name):
+                    try:
+                        # এক্সেল ফাইল আপডেট করা
+                        with pd.ExcelWriter(file_name, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+                            df_existing = pd.read_excel(file_name, sheet_name=cls)
+                            df_updated = pd.concat([df_existing, new_data], ignore_index=True)
+                            df_updated.to_excel(writer, sheet_name=cls, index=False)
+                        st.success(f"{name}-এর তথ্য {cls}-তে সফলভাবে যুক্ত হয়েছে!")
+                    except Exception as e:
+                        st.error(f"ভুল হয়েছে: {e}")
+                else:
+                    new_data.to_excel(file_name, sheet_name=cls, index=False)
+                    st.success("নতুন এক্সেল ফাইল তৈরি করে ডেটা সেভ হয়েছে!")
+            else:
+                st.warning("দয়া করে সব তথ্য পূরণ করুন।")
 
-        st.balloons()
+    if st.button("⬅️ হোম পেজে ফিরে যান"):
+        go_home()
+        st.rerun()
 
-    except Exception as e:
-        st.error(f"à¦…à§à¦¯à¦¾à¦ªà§‡ à¦¸à¦®à¦¸à§à¦¯à¦¾ à¦¹à¦šà§à¦›à§‡: {e}")
-        st.button("â¬…ï¸ à¦«à¦¿à¦°à§‡ à¦¯à¦¾à¦¨", on_click=go_to_input)
+elif st.session_state.page == "student_list":
+    st.write("এটি স্টুডেন্ট লিস্ট পেজ।")
+    if st.button("⬅️ হোম পেজে ফিরে যান"):
+        go_home()
+        st.rerun()
+
+elif st.session_state.page == "input":
+    st.write("এটি রেজাল্ট পেজ।")
+    if st.button("⬅️ হোম পেজে ফিরে যান"):
+        go_home()
+        st.rerun()
+    
