@@ -289,7 +289,7 @@ elif st.session_state.page == "student_list":
             with st.expander(f"📘 {cls} — {len(df)} জন শিক্ষার্থী", expanded=False):
                 display_cols = [c for c in ['রোল নাম্বার', 'আইডি', 'নাম', 'গ্রেড', 'জিপিএ'] if c in df.columns]
                 if display_cols:
-                    sorted_df = df[display_cols].sort_values(by='রোল নাম্বار') if 'রোল নাম্বার' in display_cols else df[display_cols]
+                    sorted_df = df[display_cols].sort_values(by='রোল নাম্বার') if 'রোল নাম্বার' in display_cols else df[display_cols]
                     st.dataframe(
                         sorted_df,
                         use_container_width=True,
@@ -343,108 +343,123 @@ elif st.session_state.page == "input":
         st.error("❌ ডেটা ফাইল পাওয়া যায়নি। দয়া করে অ্যাডমিনের সাথে যোগাযোগ করুন।")
     else:
         class_choice = st.selectbox("শ্রেণী নির্বাচন করুন:", CLASS_LIST, key="class_select")
-        roll_input = st.number_input("রোল নম্বর লিখুন:", min_value=1, step=1, key="roll_input")
+        roll_input = st.number_input("রোল নম্বর লিখুন:", min_value=1, step=1, key="roll_input_field")
         
         if st.button("🔍 ফলাফল দেখুন", use_container_width=True):
-            student = load_student_data(class_choice, roll_input)
-            if student is not None:
-                st.session_state.class_choice = class_choice
-                st.session_state.roll_input = roll_input
-                go_to_result()
-                st.rerun()
-            else:
-                st.warning("⚠️ এই রোল নম্বরের তথ্য পাওয়া যায়নি। দয়া করে সঠিক রোল নম্বর দিন।")
+            # Convert roll_input to int properly
+            try:
+                roll_number = int(roll_input)
+                student = load_student_data(class_choice, roll_number)
+                if student is not None:
+                    st.session_state.class_choice = class_choice
+                    st.session_state.roll_input = roll_number
+                    go_to_result()
+                    st.rerun()
+                else:
+                    st.warning("⚠️ এই রোল নম্বরের তথ্য পাওয়া যায়নি। দয়া করে সঠিক রোল নম্বর দিন।")
+            except ValueError:
+                st.error("❌ দয়া করে একটি বৈধ রোল নম্বর দিন।")
 
 # ==================== PAGE: RESULT (Marksheet) ====================
 elif st.session_state.page == "result":
-    class_choice = st.session_state.class_choice
-    roll_input = st.session_state.roll_input
-    
-    try:
-        df = pd.read_excel(FILE_NAME, sheet_name=class_choice)
-        student = df[df['রোল নাম্বার'].astype(str) == str(int(roll_input))]
+    # Check if session state has the required data
+    if st.session_state.class_choice is None or st.session_state.roll_input is None:
+        st.error("❌ তথ্য পাওয়া যায়নি। দয়া করে আবার চেষ্টা করুন।")
+        if st.button("⬅️ ফিরে যান", on_click=go_to_input):
+            st.rerun()
+    else:
+        class_choice = st.session_state.class_choice
+        roll_input = st.session_state.roll_input
         
-        if student.empty:
-            st.error("❌ তথ্য পাওয়া যায়নি।")
-            st.button("⬅️ ফিরে যান", on_click=go_to_input)
-        else:
-            row = student.iloc[0]
-            
-            # Student info
-            st.markdown(f"""
-                <div style="background: #f8fcf9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                    <table style="width:100%; border-collapse:collapse;">
-                        <tr>
-                            <td><b>🎯 রোল নম্বর</b></td>
-                            <td>{roll_input}</td>
-                            <td><b>👤 নাম</b></td>
-                            <td>{row['নাম']}</td>
-                        </tr>
-                        <tr>
-                            <td><b>📚 শ্রেণী</b></td>
-                            <td>{class_choice}</td>
-                            <td><b>🆔 আইডি</b></td>
-                            <td>{row.get('আইডি', '')}</td>
-                        </tr>
-                    </table>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            # Subject marks
-            skip_cols = {'রোল নাম্বার', 'নাম', 'আইডি', 'পাসওয়ার্ড', 'মোট নম্বর', 'জিপিএ', 'গ্রেড'}
-            subject_cols = [c for c in df.columns if c not in skip_cols]
-            
-            # Build marks table
-            marks_html = ""
-            for subj in subject_cols:
-                marks_html += f"<tr><td>{subj}</td><td>{row[subj]}</td></tr>"
-            
-            st.markdown(f"""
-                <table class="grade-table">
-                    <tr><th>📖 বিষয়</th><th>📊 প্রাপ্ত নম্বর</th></tr>
-                    {marks_html}
-                    <tr style="font-weight: 700; background: #f8fcf9;">
-                        <td>📈 মোট নম্বর</td>
-                        <td>{row.get('মোট নম্বর', '')}</td>
-                    </tr>
-                    <tr style="font-weight: 700; background: #f8fcf9;">
-                        <td>⭐ জিপিএ</td>
-                        <td>{row.get('জিপিএ', '')}</td>
-                    </tr>
-                    <tr style="font-weight: 700; background: #f8fcf9;">
-                        <td>🏅 গ্রেড</td>
-                        <td>{row.get('গ্রেড', '')}</td>
-                    </tr>
-                </table>
-            """, unsafe_allow_html=True)
-            
-            # Action buttons
-            col1, col2, col3 = st.columns([1, 1, 1])
-            with col1:
-                st.button("⬅️ ফিরে যান", on_click=go_to_input, use_container_width=True)
-            with col2:
-                st.button("🏠 হোম", on_click=go_home, use_container_width=True)
-            with col3:
-                components.html(
-                    """
-                    <div style="text-align:center;">
-                        <button onclick="window.print()"
-                            style="width:100%; padding: 10px; background: #2d8659; 
-                                   color: white; border: none; border-radius: 8px; 
-                                   cursor: pointer; font-size: 16px; font-weight: 500;
-                                   transition: all 0.3s ease;">
-                            🖨️ প্রিন্ট করুন
-                        </button>
-                    </div>
-                    """,
-                    height=50,
-                )
-            
-            st.balloons()
-            
-    except Exception as e:
-        st.error(f"❌ অ্যাপে সমস্যা হচ্ছে: {str(e)}")
-        st.button("⬅️ ফিরে যান", on_click=go_to_input, use_container_width=True)
+        try:
+            if not os.path.exists(FILE_NAME):
+                st.error("❌ ডেটা ফাইল পাওয়া যায়নি।")
+                st.button("⬅️ ফিরে যান", on_click=go_to_input)
+            else:
+                df = pd.read_excel(FILE_NAME, sheet_name=class_choice)
+                student = df[df['রোল নাম্বার'].astype(str) == str(int(roll_input))]
+                
+                if student.empty:
+                    st.error("❌ তথ্য পাওয়া যায়নি।")
+                    st.button("⬅️ ফিরে যান", on_click=go_to_input)
+                else:
+                    row = student.iloc[0]
+                    
+                    # Student info
+                    st.markdown(f"""
+                        <div style="background: #f8fcf9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <table style="width:100%; border-collapse:collapse;">
+                                <tr>
+                                    <td><b>🎯 রোল নম্বর</b></td>
+                                    <td>{roll_input}</td>
+                                    <td><b>👤 নাম</b></td>
+                                    <td>{row['নাম']}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>📚 শ্রেণী</b></td>
+                                    <td>{class_choice}</td>
+                                    <td><b>🆔 আইডি</b></td>
+                                    <td>{row.get('আইডি', '')}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Subject marks
+                    skip_cols = {'রোল নাম্বার', 'নাম', 'আইডি', 'পাসওয়ার্ড', 'মোট নম্বর', 'জিপিএ', 'গ্রেড'}
+                    subject_cols = [c for c in df.columns if c not in skip_cols]
+                    
+                    # Build marks table
+                    marks_html = ""
+                    for subj in subject_cols:
+                        marks_html += f"<tr><td>{subj}</td><td>{row[subj]}</td></tr>"
+                    
+                    st.markdown(f"""
+                        <table class="grade-table">
+                            <tr><th>📖 বিষয়</th><th>📊 প্রাপ্ত নম্বর</th></tr>
+                            {marks_html}
+                            <tr style="font-weight: 700; background: #f8fcf9;">
+                                <td>📈 মোট নম্বর</td>
+                                <td>{row.get('মোট নম্বর', '')}</td>
+                            </tr>
+                            <tr style="font-weight: 700; background: #f8fcf9;">
+                                <td>⭐ জিপিএ</td>
+                                <td>{row.get('জিপিএ', '')}</td>
+                            </tr>
+                            <tr style="font-weight: 700; background: #f8fcf9;">
+                                <td>🏅 গ্রেড</td>
+                                <td>{row.get('গ্রেড', '')}</td>
+                            </tr>
+                        </table>
+                    """, unsafe_allow_html=True)
+                    
+                    # Action buttons
+                    col1, col2, col3 = st.columns([1, 1, 1])
+                    with col1:
+                        st.button("⬅️ ফিরে যান", on_click=go_to_input, use_container_width=True)
+                    with col2:
+                        st.button("🏠 হোম", on_click=go_home, use_container_width=True)
+                    with col3:
+                        components.html(
+                            """
+                            <div style="text-align:center;">
+                                <button onclick="window.print()"
+                                    style="width:100%; padding: 10px; background: #2d8659; 
+                                           color: white; border: none; border-radius: 8px; 
+                                           cursor: pointer; font-size: 16px; font-weight: 500;
+                                           transition: all 0.3s ease;">
+                                    🖨️ প্রিন্ট করুন
+                                </button>
+                            </div>
+                            """,
+                            height=50,
+                        )
+                    
+                    st.balloons()
+                    
+        except Exception as e:
+            st.error(f"❌ অ্যাপে সমস্যা হচ্ছে: {str(e)}")
+            st.button("⬅️ ফিরে যান", on_click=go_to_input, use_container_width=True)
 
 # ==================== FOOTER ====================
 st.markdown("---")
@@ -456,4 +471,4 @@ st.markdown(
     </div>
     """,
     unsafe_allow_html=True
-    )
+                        )
