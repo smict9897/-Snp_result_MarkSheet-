@@ -88,18 +88,4 @@ try:
         else:
             st.warning("এই রোল নম্বরের তথ্য পাওয়া যায়নি।")
 except Exception as e:
-    st.error(f"অ্যাপে সমস্যা হচ্ছে: {e}")            # টেবিল ফরম্যাট
-            result_table = student.T.rename(columns={student.index[0]: 'মান'})
-            st.table(result_table)
-            
-            # প্রিন্ট বাটন (ব্রাউজারের প্রিন্ট অপশন খুলবে)
-            st.markdown("<div class='print-btn'>", unsafe_allow_html=True)
-            st.button("🖨️ প্রিন্ট করুন", on_click=lambda: st.write('<script>window.print()</script>', unsafe_allow_html=True))
-            st.markdown("</div>", unsafe_allow_html=True)
-            
-            st.markdown("</div>", unsafe_allow_html=True)
-            st.balloons()
-        else:
-            st.warning("এই রোল নম্বরের তথ্য পাওয়া যায়নি।")
-except Exception as e:
     st.error(f"অ্যাপে সমস্যা হচ্ছে: {e}")
