@@ -30,50 +30,87 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 file_name = 'student_data.xlsx'
-class_choice = st.selectbox("আপনার শ্রেণী নির্বাচন করুন:", ['৬ষ্ঠ শ্রেণী', '৭ম শ্রেণী', '৮ম শ্রেণী'])
 
-try:
-    df = pd.read_excel(file_name, sheet_name=class_choice)
+# ---- session state defaults ----
+if "page" not in st.session_state:
+    st.session_state.page = "input"
+if "class_choice" not in st.session_state:
+    st.session_state.class_choice = None
+if "roll_input" not in st.session_state:
+    st.session_state.roll_input = None
+
+
+def go_to_result():
+    st.session_state.page = "result"
+
+
+def go_back():
+    st.session_state.page = "input"
+
+
+# ---------------- PAGE 1: INPUT ----------------
+if st.session_state.page == "input":
+    class_choice = st.selectbox("আপনার শ্রেণী নির্বাচন করুন:", ['৬ষ্ঠ শ্রেণী', '৭ম শ্রেণী', '৮ম শ্রেণী'])
     roll_input = st.number_input("রোল নম্বর লিখুন:", min_value=1, step=1)
 
     if st.button("ফলাফল দেখুন"):
+        try:
+            df = pd.read_excel(file_name, sheet_name=class_choice)
+            student = df[df['রোল নাম্বার'].astype(str) == str(int(roll_input))]
+
+            if not student.empty:
+                st.session_state.class_choice = class_choice
+                st.session_state.roll_input = roll_input
+                go_to_result()
+                st.rerun()
+            else:
+                st.warning("এই রোল নম্বরের তথ্য পাওয়া যায়নি।")
+        except Exception as e:
+            st.error(f"অ্যাপে সমস্যা হচ্ছে: {e}")
+
+# ---------------- PAGE 2: RESULT ----------------
+elif st.session_state.page == "result":
+    class_choice = st.session_state.class_choice
+    roll_input = st.session_state.roll_input
+
+    try:
+        df = pd.read_excel(file_name, sheet_name=class_choice)
         student = df[df['রোল নাম্বার'].astype(str) == str(int(roll_input))]
+        row = student.iloc[0]
 
-        if not student.empty:
-            row = student.iloc[0]
+        st.markdown(f"""
+            <table class="info-table" style="width:100%; border-collapse:collapse; margin-bottom:15px;">
+                <tr><td><b>Roll No</b></td><td>{roll_input}</td>
+                    <td><b>Name</b></td><td>{row['নাম']}</td></tr>
+                <tr><td><b>Class</b></td><td>{class_choice}</td>
+                    <td><b>ID</b></td><td>{row.get('আইডি', '')}</td></tr>
+            </table>
+        """, unsafe_allow_html=True)
 
-            # Top info block, similar spirit to the board format but clearly school-branded
-            st.markdown(f"""
-                <table class="info-table" style="width:100%; border-collapse:collapse; margin-bottom:15px;">
-                    <tr><td><b>Roll No</b></td><td>{roll_input}</td>
-                        <td><b>Name</b></td><td>{row['নাম']}</td></tr>
-                    <tr><td><b>Class</b></td><td>{class_choice}</td>
-                        <td><b>ID</b></td><td>{row.get('আইডি', '')}</td></tr>
-                </table>
-            """, unsafe_allow_html=True)
+        skip_cols = {'রোল নাম্বার', 'নাম', 'আইডি', 'পাসওয়ার্ড', 'মোট নম্বর', 'জিপিএ', 'গ্রেড'}
+        subject_cols = [c for c in df.columns if c not in skip_cols]
 
-            # Subject/marks as a "Grade Sheet" style table
-            skip_cols = {'রোল নাম্বার', 'নাম', 'আইডি', 'পাসওয়ার্ড', 'মোট নম্বর', 'জিপিএ', 'গ্রেড'}
-            subject_cols = [c for c in df.columns if c not in skip_cols]
+        rows_html = "".join(
+            f"<tr><td>{subj}</td><td>{row[subj]}</td></tr>" for subj in subject_cols
+        )
 
-            rows_html = "".join(
-                f"<tr><td>{subj}</td><td>{row[subj]}</td></tr>" for subj in subject_cols
-            )
+        st.markdown(f"""
+            <table class="grade-table" style="width:100%; border-collapse:collapse;">
+                <tr><th style="text-align:left;">Subject</th><th style="text-align:left;">Marks</th></tr>
+                {rows_html}
+                <tr><td><b>মোট নম্বর</b></td><td><b>{row.get('মোট নম্বর','')}</b></td></tr>
+                <tr><td><b>জিপিএ</b></td><td><b>{row.get('জিপিএ','')}</b></td></tr>
+                <tr><td><b>গ্রেড</b></td><td><b>{row.get('গ্রেড','')}</b></td></tr>
+            </table>
+        """, unsafe_allow_html=True)
 
-            st.markdown(f"""
-                <table class="grade-table" style="width:100%; border-collapse:collapse;">
-                    <tr><th style="text-align:left;">Subject</th><th style="text-align:left;">Marks</th></tr>
-                    {rows_html}
-                    <tr><td><b>মোট নম্বর</b></td><td><b>{row.get('মোট নম্বর','')}</b></td></tr>
-                    <tr><td><b>জিপিএ</b></td><td><b>{row.get('জিপিএ','')}</b></td></tr>
-                    <tr><td><b>গ্রেড</b></td><td><b>{row.get('গ্রেড','')}</b></td></tr>
-                </table>
-            """, unsafe_allow_html=True)
-
-            # Working print button (real JS, runs in browser)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.button("⬅️ ফিরে যান", on_click=go_back)
+        with col2:
             components.html(
                 """
-                <div style="text-align:right; margin-top:15px;">
+                <div style="text-align:right;">
                     <button onclick="window.parent.print()"
                         style="padding:8px 16px; background:#2d8659; color:white;
                                border:none; border-radius:6px; cursor:pointer;">
@@ -81,11 +118,11 @@ try:
                     </button>
                 </div>
                 """,
-                height=60,
+                height=50,
             )
 
-            st.balloons()
-        else:
-            st.warning("এই রোল নম্বরের তথ্য পাওয়া যায়নি।")
-except Exception as e:
-    st.error(f"অ্যাপে সমস্যা হচ্ছে: {e}")
+        st.balloons()
+
+    except Exception as e:
+        st.error(f"অ্যাপে সমস্যা হচ্ছে: {e}")
+        st.button("⬅️ ফিরে যান", on_click=go_back)
