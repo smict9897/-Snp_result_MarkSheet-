@@ -349,7 +349,7 @@ if st.session_state.logged_in:
     with col1:
         st.markdown(f"""
             <div class="user-info">
-                👋 স্বাগতম, <span>{st.session_state.username}</span> ({st.session_state.role})
+                 স্বাগতম, <span>{st.session_state.username}</span> ({st.session_state.role})
             </div>
         """, unsafe_allow_html=True)
     with col3:
